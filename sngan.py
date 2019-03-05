@@ -33,7 +33,7 @@ class Generator(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.ConvTranspose2d(32, 3, 4, stride=1, padding=1),
-            nn.Tanh())
+            nn.Sigmoid())
 
     def forward(self, z):
         return self.model(z.view(-1, self.z_dim, 1, 1))
@@ -44,16 +44,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
-            # 32
             spectral_norm(nn.Conv2d(3, 64, 4, 2, padding=1, bias=False)),
             nn.LeakyReLU(0.1),
-            # 16
             spectral_norm(nn.Conv2d(64, 128, 4, 2, padding=1, bias=False)),
             nn.LeakyReLU(0.1),
-            # 8
             spectral_norm(nn.Conv2d(128, 256, 4, 2, padding=1, bias=False)),
             nn.LeakyReLU(0.1),
-            # 4
             spectral_norm(nn.Conv2d(256, 512, 4, 2, padding=1, bias=False)),
             nn.LeakyReLU(0.1))
         self.linear = spectral_norm(nn.Linear(2 * 2 * 512, 1))
@@ -66,7 +62,7 @@ class Discriminator(nn.Module):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epoch', type=int, default=200)
+parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--batch-size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=2e-4)
 parser.add_argument('--name', type=str, default='SN-WGAN')
@@ -100,10 +96,13 @@ valid_writer = SummaryWriter(os.path.join(args.log_dir, 'valid'))
 sample_z = torch.randn(args.batch_size, args.z_dim).to(device)
 
 iter_num = 0
-for epoch in range(200):
+for epoch in range(args.epochs):
     with tqdm(dataloader) as t:
+        t.set_description('Epoch %2d/%2d' % (epoch + 1, args.epochs))
         for data, _ in t:
             data = data.to(device)
+            if iter_num == 0:
+                train_writer.add_image('real sample', make_grid(data))
 
             # update discriminator
             optim_D.zero_grad()
@@ -111,7 +110,8 @@ for epoch in range(200):
             loss_D = -net_D(data).mean() + net_D(net_G(z)).mean()
             loss_D.backward()
             optim_D.step()
-            train_writer.add_scalar('loss_D', loss_D.item(), iter_num)
+            train_writer.add_scalar('loss', -loss_D.item(), iter_num)
+            t.set_postfix(loss='%.4f' % -loss_D.item())
 
             if iter_num % args.D_iter == 0:
                 # update generator
@@ -120,11 +120,10 @@ for epoch in range(200):
                 loss_G = -net_D(net_G(z)).mean()
                 loss_G.backward()
                 optim_G.step()
-                train_writer.add_scalar('loss_G', loss_G.item(), iter_num)
 
             if iter_num % args.sample_iter == 0:
                 fake = net_G(sample_z).cpu()
-                valid_writer.add_image('sample', make_grid(fake))
+                valid_writer.add_image('sample', make_grid(fake), iter_num)
 
             iter_num += 1
         scheduler_G.step()
