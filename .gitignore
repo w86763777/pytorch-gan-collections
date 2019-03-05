@@ -1,0 +1,12 @@
+# python
+venv
+__pycache__
+
+# vscode
+.vscode
+
+# log
+log
+
+# data
+data
