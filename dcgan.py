@@ -4,7 +4,6 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.nn.utils import spectral_norm
 from torchvision import datasets, transforms
 from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
@@ -15,11 +14,9 @@ class Generator(nn.Module):
     def __init__(self, z_dim):
         super().__init__()
         self.z_dim = z_dim
+        self.linear = nn.Linear(z_dim, 2 * 2 * 512)
 
         self.model = nn.Sequential(
-            nn.ConvTranspose2d(z_dim, 512, 4, stride=2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
             nn.ConvTranspose2d(512, 256, 4, stride=2, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
@@ -29,14 +26,14 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, 3, 3, stride=1, padding=1),
+            nn.ConvTranspose2d(64, 3, 4, stride=2, padding=1),
             nn.Tanh())
 
     def forward(self, z):
-        return self.model(z.view(-1, self.z_dim, 1, 1))
+        outputs = self.linear(z)
+        outputs = outputs.view(-1, 512, 2, 2)
+        outputs = self.model(outputs)
+        return outputs
 
 
 class Discriminator(nn.Module):
@@ -44,28 +41,29 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
-            spectral_norm(nn.Conv2d(3, 64, 4, 2, padding=1, bias=False)),
-            nn.LeakyReLU(0.1),
-            spectral_norm(nn.Conv2d(64, 128, 4, 2, padding=1, bias=False)),
-            nn.LeakyReLU(0.1),
-            spectral_norm(nn.Conv2d(128, 256, 4, 2, padding=1, bias=False)),
-            nn.LeakyReLU(0.1),
-            spectral_norm(nn.Conv2d(256, 512, 4, 2, padding=1, bias=False)),
-            nn.LeakyReLU(0.1))
-        self.linear = spectral_norm(nn.Linear(2 * 2 * 512, 1))
+            nn.Conv2d(3, 64, 4, 2, padding=1, bias=False),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(64, 128, 4, 2, padding=1, bias=False),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(128, 256, 4, 2, padding=1, bias=False),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(256, 512, 4, 2, padding=1, bias=False),
+            nn.LeakyReLU(0.2))
+        self.linear = nn.Linear(2 * 2 * 512, 1)
 
     def forward(self, x):
         batch_size = x.size(0)
         x = self.model(x).view(batch_size, -1)
         x = self.linear(x)
-        return x
+        return torch.sigmoid(x)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=1000)
-parser.add_argument('--batch-size', type=int, default=64)
-parser.add_argument('--lr', type=float, default=2e-4)
-parser.add_argument('--name', type=str, default='SN-GAN')
+parser.add_argument('--batch-size', type=int, default=100)
+parser.add_argument('--lr-G', type=float, default=1e-4)
+parser.add_argument('--lr-D', type=float, default=1e-4)
+parser.add_argument('--name', type=str, default='DCGAN')
 parser.add_argument('--log-dir', type=str, default='log')
 parser.add_argument('--z-dim', type=int, default=128)
 parser.add_argument('--D-iter', type=int, default=5)
@@ -82,14 +80,14 @@ dataloader = torch.utils.data.DataLoader(
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])),
-    batch_size=args.batch_size, shuffle=True, num_workers=4)
+    batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True)
 
 
 net_G = Generator(args.z_dim).to(device)
 net_D = Discriminator().to(device)
 
-optim_G = optim.Adam(net_G.parameters(), lr=args.lr, betas=(0.0, 0.9))
-optim_D = optim.Adam(net_D.parameters(), lr=args.lr, betas=(0.0, 0.9))
+optim_G = optim.Adam(net_G.parameters(), lr=args.lr_G, betas=(0.5, 0.999))
+optim_D = optim.Adam(net_D.parameters(), lr=args.lr_D, betas=(0.5, 0.999))
 
 scheduler_G = optim.lr_scheduler.ExponentialLR(optim_G, gamma=0.995)
 scheduler_D = optim.lr_scheduler.ExponentialLR(optim_D, gamma=0.995)
@@ -101,31 +99,38 @@ os.makedirs(os.path.join(args.log_dir, args.name, 'sample'))
 sample_z = torch.randn(args.sample_size, args.z_dim).to(device)
 
 iter_num = 0
+real_label = torch.full((args.batch_size, 1), 1).to(device)
+fake_label = torch.full((args.batch_size, 1), 0).to(device)
+label = torch.cat([real_label, fake_label], dim=0)
 for epoch in range(args.epochs):
     with tqdm(dataloader) as t:
         t.set_description('Epoch %2d/%2d' % (epoch + 1, args.epochs))
         for real, _ in t:
             real = real.to(device)
             if iter_num == 0:
-                grid = (make_grid(real) + 1) / 2
+                grid = (make_grid(real[:args.sample_size]) + 1) / 2
                 train_writer.add_image('real sample', grid)
 
-            # update discriminator
-            optim_D.zero_grad()
-            z = torch.randn(args.batch_size, args.z_dim).to(device)
-            loss_D = -net_D(real).mean() + net_D(net_G(z).detach()).mean()
-            loss_D.backward()
-            optim_D.step()
-            train_writer.add_scalar('loss', -loss_D.item(), iter_num)
-            t.set_postfix(loss='%.4f' % -loss_D.item())
-
-            if iter_num % args.D_iter == 0:
-                # update generator
-                optim_G.zero_grad()
+            if iter_num % 2 == 0:
+                # update discriminator
+                optim_D.zero_grad()
                 z = torch.randn(args.batch_size, args.z_dim).to(device)
-                loss_G = -net_D(net_G(z)).mean()
-                loss_G.backward()
-                optim_G.step()
+                pred_D = torch.cat([net_D(real), net_D(net_G(z).detach())])
+                loss_D = nn.functional.binary_cross_entropy(pred_D, label)
+                loss_D.backward()
+                optim_D.step()
+                train_writer.add_scalar('loss', loss_D.item(), iter_num)
+
+            # update generator
+            optim_G.zero_grad()
+            z = torch.randn(args.batch_size, args.z_dim).to(device)
+            pred_G = net_D(net_G(z))
+            loss_G = nn.functional.binary_cross_entropy(pred_G, real_label)
+            loss_G.backward()
+            optim_G.step()
+            train_writer.add_scalar('loss/G', loss_G.item(), iter_num)
+            t.set_postfix(loss='%.4f' % loss_D.item(),
+                          loss_G='%.4f' % loss_G.item())
 
             if iter_num % args.sample_iter == 0:
                 fake = net_G(sample_z).cpu()
@@ -134,8 +139,8 @@ for epoch in range(args.epochs):
                 save_image(grid, os.path.join(
                     args.log_dir, args.name, 'sample', '%d.png' % iter_num))
             iter_num += 1
-    scheduler_G.step()
-    scheduler_D.step()
+        scheduler_G.step()
+        scheduler_D.step()
     if (epoch + 1) % 100 == 0:
         torch.save(net_G.state_dict(),
                    os.path.join(args.log_dir, args.name, 'net_G.pt'))

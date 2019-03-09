@@ -7,6 +7,11 @@ __pycache__
 
 # log
 log
+*.gif
 
 # data
 data
+
+# model
+*.pt
+*.pth
