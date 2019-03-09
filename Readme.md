@@ -1,8 +1,6 @@
-# Spectral Normalization GAN
+# Collections of GANs
 
-- Pytorch implementation of GANs[SN-GAN](https://arxiv.org/abs/1802.05957)
-- The architecture of generator and discriminator are based on [DCGAN](https://arxiv.org/abs/1511.06434)
-- [Wasserstein Loss](https://arxiv.org/abs/1701.07875)
+Pytorch implementation of GANs
 
 ## Models
 - [ ] GAN
