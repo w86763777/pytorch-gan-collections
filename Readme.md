@@ -35,7 +35,7 @@ $ python sample2gif.py --name <model name>
 ```
 All available model name is list in [Models](#Models)
 
-## Results
+## Results on CIFAR-10
 - DCGAN
 
 ![](./results/DCGAN.gif) ![](./results/DCGAN.png)
