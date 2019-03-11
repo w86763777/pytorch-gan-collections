@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch import autograd
 from torchvision import datasets, transforms
-from torchvision.utils import make_grid
+from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 
@@ -79,7 +79,7 @@ def calc_gradient_penalty(net_D, real, fake):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=1000)
+parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--batch-size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=1e-4)
 parser.add_argument('--name', type=str, default='WGAN-GP')
@@ -117,6 +117,7 @@ scheduler_D = optim.lr_scheduler.ExponentialLR(optim_D, gamma=0.995)
 train_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'train'))
 valid_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'valid'))
 
+os.makedirs(os.path.join(args.log_dir, args.name, 'sample'))
 sample_z = torch.randn(args.sample_size, args.z_dim).to(device)
 
 iter_num = 0
@@ -154,6 +155,8 @@ for epoch in range(args.epochs):
                 fake = net_G(sample_z).cpu()
                 grid = (make_grid(fake) + 1) / 2
                 valid_writer.add_image('sample', grid, iter_num)
+                save_image(grid, os.path.join(
+                    args.log_dir, args.name, 'sample', '%d.png' % iter_num))
             iter_num += 1
         scheduler_G.step()
         scheduler_D.step()
