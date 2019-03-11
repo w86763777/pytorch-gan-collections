@@ -38,15 +38,12 @@ All available model name is list in [Models](#Models)
 ## Results
 - DCGAN
 
-![](./results/DCGAN.gif)
-![](./results/DCGAN.png)
+![](./results/DCGAN.gif) ![](./results/DCGAN.png)
 
 - WGAN-GP
 
-![](./results/WGAN-GP.gif)
-![](./results/WGAN-GP.png)
+![](./results/WGAN-GP.gif) ![](./results/WGAN-GP.png)
 
 - SN-GAN
 
-![](./results/SN-GAN.gif)
-![](./results/SN-GAN.png)
+![](./results/SN-GAN.gif) ![](./results/SN-GAN.png)
