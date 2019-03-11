@@ -35,8 +35,6 @@ $ python sample2gif.py --name <model name>
 ```
 All available model name is list in [Models](#Models)
 
-<img style="float: right;" src="whatever.jpg">
-
 ## Results
 - DCGAN
 
