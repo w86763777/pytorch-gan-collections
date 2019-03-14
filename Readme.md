@@ -38,12 +38,12 @@ All available model name is list in [Models](#Models)
 ## Results on CIFAR-10
 - DCGAN
 
-![](./results/DCGAN.gif) ![](./results/DCGAN.png)
+![](./results/DCGAN-CIFAR10.gif) ![](./results/DCGAN-CIFAR10.png)
 
 - WGAN-GP
 
-![](./results/WGAN-GP.gif) ![](./results/WGAN-GP.png)
+![](./results/WGAN-GP-CIFAR10.gif) ![](./results/WGAN-GP-CIFAR10.png)
 
 - SN-GAN
 
-![](./results/SN-GAN.gif) ![](./results/SN-GAN.png)
+![](./results/SN-GAN-CIFAR10.gif) ![](./results/SN-GAN-CIFAR10.png)
