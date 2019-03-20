@@ -37,13 +37,10 @@ All available model name is list in [Models](#Models)
 
 ## Results on CIFAR-10
 - DCGAN
-
-![](./results/DCGAN-CIFAR10.gif) ![](./results/DCGAN-CIFAR10.png)
+![](https://drive.google.com/uc?export=view&id=1QMmH3PeXXeOq6f-1kZlKk2hcQI3CSGE5) ![](https://drive.google.com/uc?export=view&id=1Br655M_Y4ghaola9iox4Ik9phVl47QBr)
 
 - WGAN-GP
-
-![](./results/WGAN-GP-CIFAR10.gif) ![](./results/WGAN-GP-CIFAR10.png)
+![](https://drive.google.com/uc?export=view&id=1VYjMLPulK_1iaNy4LntzsfNvHZOCVFz2) ![](https://drive.google.com/uc?export=view&id=1ZeioKXL2C9bgmQPQzXoMmQBHS_0wdHt_)
 
 - SN-GAN
-
-![](./results/SN-GAN-CIFAR10.gif) ![](./results/SN-GAN-CIFAR10.png)
+![](https://drive.google.com/uc?export=view&id=1niXJACfN97UntCtxTBDxN-A01ZaSWrAy) ![](https://drive.google.com/uc?export=view&id=1emYfU-84ef5pJCrqplxifXUvm29839R1)
