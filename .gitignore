@@ -14,3 +14,6 @@ data
 # model
 *.pt
 *.pth
+
+# images
+results

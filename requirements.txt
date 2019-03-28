@@ -6,6 +6,7 @@ flake8==3.7.7
 gast==0.2.2
 grpcio==1.19.0
 h5py==2.9.0
+imageio==2.5.0
 isort==4.3.10
 Keras-Applications==1.0.7
 Keras-Preprocessing==1.0.9

@@ -5,7 +5,7 @@ Pytorch implementation of GANs
 ## Models
 - [ ] GAN
 - [x] DCGAN
-- [ ] WGAN
+- [x] WGAN
 - [x] WGAN-GP
 - [x] SN-GAN 
 
@@ -38,12 +38,16 @@ All available model name is list in [Models](#Models)
 ## Results on CIFAR-10
 - DCGAN
 
-    ![](https://drive.google.com/uc?export=view&id=1QMmH3PeXXeOq6f-1kZlKk2hcQI3CSGE5) ![](https://drive.google.com/uc?export=view&id=1Br655M_Y4ghaola9iox4Ik9phVl47QBr)
+    ![](https://drive.google.com/uc?export=view&id=1iGE9cwVDmiB2sCpT92Sg3PmlEu5dlf6r) ![](https://drive.google.com/uc?export=view&id=1iKKBEF7pXoq1v4xglco6Isypl33QI1zj)
+
+- WGAN
+
+    ![](https://drive.google.com/uc?export=view&id=1v3v_j8zPDY01RWRBc-ClO97L_zsRxPli) ![](https://drive.google.com/uc?export=view&id=1qmnnTrs3RF71WiQ5tx4SwJIyPmmlbVS5)
 
 - WGAN-GP
 
-    ![](https://drive.google.com/uc?export=view&id=1VYjMLPulK_1iaNy4LntzsfNvHZOCVFz2) ![](https://drive.google.com/uc?export=view&id=1ZeioKXL2C9bgmQPQzXoMmQBHS_0wdHt_)
+    ![](https://drive.google.com/uc?export=view&id=172Nhzr8E_usITv_Z_0JAOKCM2ishyplW) ![](https://drive.google.com/uc?export=view&id=1GRvbxoN-dubX53NtjIg2KXR0i3Ow1WaI)
 
 - SN-GAN
 
-    ![](https://drive.google.com/uc?export=view&id=1niXJACfN97UntCtxTBDxN-A01ZaSWrAy) ![](https://drive.google.com/uc?export=view&id=1emYfU-84ef5pJCrqplxifXUvm29839R1)
+    ![](https://drive.google.com/uc?export=view&id=1itXkiwjemOT2uOjYUIKPr_t7myBjeFz5) ![](https://drive.google.com/uc?export=view&id=1OVvr9xs5pV-BEQ5JlVK_3r4stUcbzox8)
