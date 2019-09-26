@@ -4,11 +4,15 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch import autograd
+from torch.nn.utils import spectral_norm
 from torchvision import datasets, transforms
 from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
-from tqdm import tqdm
+from tqdm import trange
+
+from gans.scores.fid_score import fid_score
+from gans.scores.inception_score import inception_score
+from gans.scores.utils import IgnoreLabelDataset, GenerativeDataset
 
 
 class GenResBlock(nn.Module):
@@ -58,14 +62,14 @@ class DisResBlock(nn.Module):
         self.down = False
         if down or in_channels != out_channels:
             self.down = True
-            self.residual = nn.Conv2d(
-                in_channels, out_channels, 3, stride=2, padding=1)
+            self.residual = spectral_norm(
+                nn.Conv2d(in_channels, out_channels, 3, stride=2, padding=1))
         stride = 2 if down else 1
         self.blocks = nn.Sequential(
             nn.ReLU(),
-            nn.Conv2d(in_channels, in_channels, 3, stride, 1),
+            spectral_norm(nn.Conv2d(in_channels, in_channels, 3, stride, 1)),
             nn.ReLU(),
-            nn.Conv2d(in_channels, out_channels, 3, 1, 1)
+            spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1))
         )
 
     def forward(self, x):
@@ -85,29 +89,12 @@ class Discriminator(nn.Module):
             DisResBlock(128, 128),
             nn.ReLU(),
             nn.AvgPool2d((8, 8)))
-        self.linear = nn.Linear(128, 1)
+        self.linear = spectral_norm(nn.Linear(128, 1))
 
     def forward(self, x):
         x = self.model(x).view(-1, 128)
         x = self.linear(x)
         return x
-
-
-def calc_gradient_penalty(net_D, real, fake):
-    alpha = torch.rand(real.size(0), 1, 1, 1).to(device)
-    alpha = alpha.expand(real.size())
-
-    interpolates = alpha * real.detach() + (1 - alpha) * fake.detach()
-    interpolates.requires_grad = True
-    disc_interpolates = net_D(interpolates)
-    ones = torch.ones(disc_interpolates.size()).to(device)
-    gradients = autograd.grad(
-        outputs=disc_interpolates, inputs=interpolates,
-        grad_outputs=ones,
-        create_graph=True, retain_graph=True, only_inputs=True)[0]
-    gradients_norm = torch.sqrt(torch.sum(gradients ** 2, dim=[1, 2]))
-    gradient_penalty = ((gradients_norm - 1) ** 2).mean()
-    return gradient_penalty
 
 
 def loop(dataloader):
@@ -120,76 +107,82 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=100000)
 parser.add_argument('--batch-size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=2e-4)
-parser.add_argument('--name', type=str, default='WGAN-GP')
+parser.add_argument('--name', type=str, default='SNGAN')
 parser.add_argument('--log-dir', type=str, default='log')
 parser.add_argument('--z-dim', type=int, default=128)
 parser.add_argument('--D-iter', type=int, default=5)
-parser.add_argument('--sample-iter', type=int, default=500)
+parser.add_argument('--sample-iter', type=int, default=1000)
 parser.add_argument('--sample-size', type=int, default=64)
-parser.add_argument('--alpha', type=float, default=10)
 args = parser.parse_args()
+log_dir = os.path.join(args.log_dir, args.name)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+device = torch.device('cuda')
+cifar10 = datasets.CIFAR10(
+    './data', train=True, download=True,
+    transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]))
 dataloader = torch.utils.data.DataLoader(
-    datasets.CIFAR10(
-        './data', train=True, download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])),
-    batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True)
+    cifar10, batch_size=args.batch_size, shuffle=True, num_workers=4,
+    drop_last=True)
 
 net_G = Generator(args.z_dim).to(device)
 net_D = Discriminator().to(device)
 
-optim_G = optim.RMSprop(net_G.parameters(), lr=args.lr)
-optim_D = optim.RMSprop(net_D.parameters(), lr=args.lr)
+optim_G = optim.Adam(net_G.parameters(), lr=args.lr, betas=(0.5, 0.999))
+optim_D = optim.Adam(net_D.parameters(), lr=args.lr, betas=(0.5, 0.999))
 
-train_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'train'))
-valid_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'valid'))
+train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
+valid_writer = SummaryWriter(os.path.join(log_dir, 'valid'))
 
-os.makedirs(os.path.join(args.log_dir, args.name, 'sample'), exist_ok=True)
+os.makedirs(os.path.join(log_dir, 'sample'), exist_ok=True)
 sample_z = torch.randn(args.sample_size, args.z_dim).to(device)
 
-with tqdm(total=args.iterations) as t:
-    for iter_num, (real, _) in enumerate(loop(dataloader)):
-        if iter_num == args.iterations:
-            break
+valid_dataset = GenerativeDataset(net_G, args.z_dim, 10000, device)
+looper = loop(dataloader)
+with trange(args.iterations, dynamic_ncols=True) as pbar:
+    for step in pbar:
+        real, _ = next(looper)
         real = real.to(device)
-        if iter_num == 0:
-            grid = (make_grid(real) + 1) / 2
-            train_writer.add_image('real sample', grid)
 
-        optim_D.zero_grad()
         z = torch.randn(args.batch_size, args.z_dim).to(device)
         with torch.no_grad():
             fake = net_G(z).detach()
-        loss_gp = calc_gradient_penalty(net_D, real, fake)
-        loss_D = -net_D(real).mean() + net_D(fake).mean()
-        loss = loss_D + args.alpha * loss_gp
-        loss.backward()
+        loss_real = torch.nn.functional.relu(1 - net_D(real)).mean()
+        loss_fake = torch.nn.functional.relu(1 + net_D(fake)).mean()
+        loss_D = loss_real + loss_fake
+        optim_D.zero_grad()
+        loss_D.backward()
         optim_D.step()
-        train_writer.add_scalar('loss', -loss_D.item(), iter_num)
-        train_writer.add_scalar('loss_gp', loss_gp.item(), iter_num)
-        t.set_postfix(loss='%.4f' % -loss_D.item())
+        train_writer.add_scalar('loss', loss_D.item(), step)
+        pbar.set_postfix(loss='%.4f' % loss_D.item())
 
-        if iter_num % args.D_iter == 0:
+        if step % args.D_iter == 0:
             optim_G.zero_grad()
             z = torch.randn(args.batch_size, args.z_dim).to(device)
             loss_G = -net_D(net_G(z)).mean()
             loss_G.backward()
             optim_G.step()
 
-        if iter_num % args.sample_iter == 0:
+        if step == 0:
+            grid = (make_grid(real) + 1) / 2
+            train_writer.add_image('real sample', grid)
+
+        if step == 0 or (step + 1) % args.sample_iter == 0:
             fake = net_G(sample_z).cpu()
             grid = (make_grid(fake) + 1) / 2
-            valid_writer.add_image('sample', grid, iter_num)
+            valid_writer.add_image('sample', grid, step)
             save_image(grid, os.path.join(
-                args.log_dir, args.name, 'sample', '%d.png' % iter_num))
+                log_dir, 'sample', '%d.png' % step))
 
-        t.update(1)
-        if (iter_num + 1) % 10000 == 0:
+        if step == 0 or (step + 1) % 10000 == 0:
             torch.save(
                 net_G.state_dict(),
-                os.path.join(args.log_dir, args.name, 'G_%d.pt' % iter_num))
+                os.path.join(log_dir, 'G_%d.pt' % step))
+            score, _ = inception_score(valid_dataset, batch_size=64, cuda=True)
+            valid_writer.add_scalar('Inception Score', score, step)
+            score = fid_score(IgnoreLabelDataset(cifar10), valid_dataset,
+                              batch_size=64, cuda=True, normalize=True,
+                              r_cache='./.fid_cache/cifar10')
+            valid_writer.add_scalar('FID Score', score, step)

@@ -7,7 +7,11 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
-from tqdm import tqdm
+from tqdm import trange
+
+from gans.scores.fid_score import fid_score
+from gans.scores.inception_score import inception_score
+from gans.scores.utils import IgnoreLabelDataset, GenerativeDataset
 
 
 class Generator(nn.Module):
@@ -67,26 +71,27 @@ def loop(dataloader):
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=200000)
 parser.add_argument('--batch-size', type=int, default=64)
-parser.add_argument('--lr', type=float, default=5e-5)
+parser.add_argument('--lr', type=float, default=1e-4)
 parser.add_argument('--clip', type=float, default=1e-2)
 parser.add_argument('--name', type=str, default='WGAN')
 parser.add_argument('--log-dir', type=str, default='log')
 parser.add_argument('--z-dim', type=int, default=128)
-parser.add_argument('--D-iter', type=int, default=5)
-parser.add_argument('--sample-iter', type=int, default=500)
+parser.add_argument('--iter-D', type=int, default=5)
+parser.add_argument('--sample-iter', type=int, default=1000)
 parser.add_argument('--sample-size', type=int, default=64)
 args = parser.parse_args()
+log_dir = os.path.join(args.log_dir, args.name)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+device = torch.device('cuda')
+cifar10 = datasets.CIFAR10(
+    './data', train=True, download=True,
+    transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]))
 dataloader = torch.utils.data.DataLoader(
-    datasets.CIFAR10(
-        './data', train=True, download=True,
-        transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])),
-    batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True)
+    cifar10, batch_size=args.batch_size, shuffle=True, num_workers=4,
+    drop_last=True)
 
 net_G = Generator(args.z_dim).to(device)
 net_D = Discriminator().to(device)
@@ -94,50 +99,55 @@ net_D = Discriminator().to(device)
 optim_G = optim.RMSprop(net_G.parameters(), lr=args.lr)
 optim_D = optim.RMSprop(net_D.parameters(), lr=args.lr)
 
-train_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'train'))
-valid_writer = SummaryWriter(os.path.join(args.log_dir, args.name, 'valid'))
+train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
+valid_writer = SummaryWriter(os.path.join(log_dir, 'valid'))
 
-os.makedirs(os.path.join(args.log_dir, args.name, 'sample'), exist_ok=True)
+os.makedirs(os.path.join(log_dir, 'sample'), exist_ok=True)
 sample_z = torch.randn(args.sample_size, args.z_dim).to(device)
 
-with tqdm(total=args.iterations) as t:
-    for iter_num, (real, _) in enumerate(loop(dataloader)):
-        if iter_num == args.iterations:
-            break
+valid_dataset = GenerativeDataset(net_G, args.z_dim, 10000, device)
+looper = loop(dataloader)
+with trange(args.iterations, dynamic_ncols=True) as pbar:
+    for step in pbar:
+        real, _ = next(looper)
         real = real.to(device)
-        if iter_num == 0:
-            grid = (make_grid(real) + 1) / 2
-            train_writer.add_image('real sample', grid)
 
-        optim_D.zero_grad()
         z = torch.randn(args.batch_size, args.z_dim).to(device)
         with torch.no_grad():
             fake = net_G(z).detach()
         loss = -net_D(real).mean() + net_D(fake).mean()
+        optim_D.zero_grad()
         loss.backward()
         optim_D.step()
-        train_writer.add_scalar('loss', -loss.item(), iter_num)
-        t.set_postfix(loss='%.4f' % -loss.item())
+        train_writer.add_scalar('loss', -loss.item(), step)
+        pbar.set_postfix(loss='%.4f' % -loss.item())
 
         for param in net_D.parameters():
             param.data.clamp_(-args.clip, args.clip)
 
-        if iter_num % args.D_iter == 0:
-            optim_G.zero_grad()
+        if step % args.iter_D == 0:
             z = torch.randn(args.batch_size, args.z_dim).to(device)
             loss_G = -net_D(net_G(z)).mean()
+            optim_G.zero_grad()
             loss_G.backward()
             optim_G.step()
 
-        if iter_num % args.sample_iter == 0:
+        if step == 0:
+            grid = (make_grid(real) + 1) / 2
+            train_writer.add_image('real sample', grid)
+
+        if step == 0 or (step + 1) % args.sample_iter == 0:
             fake = net_G(sample_z).cpu()
             grid = (make_grid(fake) + 1) / 2
-            valid_writer.add_image('sample', grid, iter_num)
-            save_image(grid, os.path.join(
-                args.log_dir, args.name, 'sample', '%d.png' % iter_num))
+            valid_writer.add_image('sample', grid, step)
+            save_image(grid, os.path.join(log_dir, 'sample', '%d.png' % step))
 
-        t.update(1)
-        if (iter_num + 1) % 10000 == 0:
+        if step == 0 or (step + 1) % 10000 == 0:
             torch.save(
-                net_G.state_dict(),
-                os.path.join(args.log_dir, args.name, 'G_%d.pt' % iter_num))
+                net_G.state_dict(), os.path.join(log_dir, 'G_%d.pt' % step))
+            score, _ = inception_score(valid_dataset, batch_size=64, cuda=True)
+            valid_writer.add_scalar('Inception Score', score, step)
+            score = fid_score(IgnoreLabelDataset(cifar10), valid_dataset,
+                              batch_size=64, cuda=True, normalize=True,
+                              r_cache='./.fid_cache/cifar10')
+            valid_writer.add_scalar('FID Score', score, step)

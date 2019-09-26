@@ -10,6 +10,7 @@ log
 
 # data
 data
+.fid_cache/
 
 # model
 *.pt
@@ -17,3 +18,5 @@ data
 
 # images
 results
+
+*.sh
