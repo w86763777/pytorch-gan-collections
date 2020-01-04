@@ -107,6 +107,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=100000)
 parser.add_argument('--batch-size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=2e-4)
+parser.add_argument('--betas', nargs=2, type=float, default=[0, 0.9])
 parser.add_argument('--name', type=str, default='SNGAN')
 parser.add_argument('--log-dir', type=str, default='log')
 parser.add_argument('--z-dim', type=int, default=128)
@@ -130,8 +131,8 @@ dataloader = torch.utils.data.DataLoader(
 net_G = Generator(args.z_dim).to(device)
 net_D = Discriminator().to(device)
 
-optim_G = optim.Adam(net_G.parameters(), lr=args.lr, betas=(0.5, 0.999))
-optim_D = optim.Adam(net_D.parameters(), lr=args.lr, betas=(0.5, 0.999))
+optim_G = optim.Adam(net_G.parameters(), lr=args.lr, betas=args.betas)
+optim_D = optim.Adam(net_D.parameters(), lr=args.lr, betas=args.betas)
 
 train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
 valid_writer = SummaryWriter(os.path.join(log_dir, 'valid'))

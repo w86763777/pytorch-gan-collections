@@ -121,11 +121,11 @@ def loop(dataloader):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=200000)
+parser.add_argument('--iterations', type=int, default=100000)
 parser.add_argument('--batch-size', type=int, default=64)
-parser.add_argument('--lr', type=float, default=5e-5)
-parser.add_argument('--clip', type=float, default=1e-2)
+parser.add_argument('--lr', type=float, default=2e-4)
 parser.add_argument('--gamma', type=int, default=10)
+parser.add_argument('--betas', nargs=2, type=float, default=[0.5, 0.999])
 parser.add_argument('--name', type=str, default='WGANGP')
 parser.add_argument('--log-dir', type=str, default='log')
 parser.add_argument('--z-dim', type=int, default=128)
@@ -149,8 +149,8 @@ dataloader = torch.utils.data.DataLoader(
 net_G = Generator(args.z_dim).to(device)
 net_D = Discriminator().to(device)
 
-optim_G = optim.RMSprop(net_G.parameters(), lr=args.lr)
-optim_D = optim.RMSprop(net_D.parameters(), lr=args.lr)
+optim_G = optim.Adam(net_G.parameters(), lr=args.lr, betas=args.betas)
+optim_D = optim.Adam(net_D.parameters(), lr=args.lr, betas=args.betas)
 
 train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
 valid_writer = SummaryWriter(os.path.join(log_dir, 'valid'))
@@ -177,9 +177,6 @@ with trange(args.iterations, dynamic_ncols=True) as pbar:
         train_writer.add_scalar('loss', -loss.item(), step)
         pbar.set_postfix(loss='%.4f' % -loss_D.item(),
                          loss_gp='%.4f' % loss_gp.item())
-
-        for param in net_D.parameters():
-            param.data.clamp_(-args.clip, args.clip)
 
         if step % args.iter_D == 0:
             z = torch.randn(args.batch_size, args.z_dim).to(device)
