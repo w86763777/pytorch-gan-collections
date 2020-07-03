@@ -1,11 +1,10 @@
 # Collections of GANs
 
-Pytorch implementation of GANs
+Pytorch implementation of unsupervised GANs
 
 ## Models
-- [ ] GAN
 - [x] DCGAN
-- [x] WGAN
+- [ ] WGAN
 - [x] WGAN-GP
 - [x] SN-GAN 
 
@@ -13,41 +12,57 @@ Pytorch implementation of GANs
 - python 3.6
 - Install python packages
     ```bash
-    $ pip install -r requirements.txt
+    pip install -U pip setuptools
+    pip install -r requirements.txt
     ```
 
-## How To Run
-- Train model
-    ```bash
-    $ python dcgan.py   # DCGAN
-    $ python wgangp.py  # WGAN-GP
-    $ python sngan.py   # SN-GAN
-    ```
-- [Optional] See tensorboard for more training details.
-    ```bash
-    $ tensorboard --logdir=log/
-    ```
-    open [0.0.0.0:6006](0.0.0.0:6006)
+## Results
 
-## Generate GIF
-```bash
-$ python sample2gif.py --name <model name>
-```
-All available model name is list in [Models](#Models)
+|Model          |Dataset|Inception Score|FID Score|
+|---------------|-------|---------------|---------|
+|DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
+|WGAN           |CIFAR10|6.111(0.088)   |41.75    |
+|WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
+|WGAN-GP(ResNet)|CIFAR10|7.693(0.108)   |18.70    |
+|SNGAN(CNN)     |CIFAR10|7.521(0.111)   |20.41    |
+|SNGAN(ResNet)  |CIFAR10|8.214(0.094)   |14.41    |
 
-## Results on CIFAR-10
+## Examples
 - DCGAN
-
-    ![](https://drive.google.com/uc?export=view&id=1iGE9cwVDmiB2sCpT92Sg3PmlEu5dlf6r) ![](https://drive.google.com/uc?export=view&id=1iKKBEF7pXoq1v4xglco6Isypl33QI1zj)
-
+    ![image](https://drive.google.com/uc?export=view&id=14vz9JTxi4A8p5x2kiS7STnAMMGJb8_U0) ![image](https://drive.google.com/uc?export=view&id=1vCjp-hqNlCIhrzk5sIdl4Ex2FfWg7tCz)
 - WGAN
+    WIP
+- WGAN-GP(CNN)
+    ![image](https://drive.google.com/uc?export=view&id=1i7B2i_nDZrTyvhOefmEHRs_mGXU7mv4Q) ![image](https://drive.google.com/uc?export=view&id=1Vw1xITa1FtGmMtbgi31f9-Hg6Ca9OYZD)
+- WGAN-GP(ResNet)
+    ![image](https://drive.google.com/uc?export=view&id=1WbMPMUwd2ltDkqowBMcIwUWP7dF87LH0) ![image](https://drive.google.com/uc?export=view&id=1Ht3OwRPUpjblETWVXhdWmZmOpcz8Mmxb)
+- SNGAN(CNN)
+    ![image](https://drive.google.com/uc?export=view&id=1tQyWeyjNNOlWWBPo2XwhwZQ9t1q5a1v5) ![image](https://drive.google.com/uc?export=view&id=1EnwtSPQnVEJA7ohOGuYEC8nOrRlJnyp2)
+- SNGAN(ResNet)
+    ![image](https://drive.google.com/uc?export=view&id=1CN6vgPqodAQBtp9OElPvCaNakomKKP4E) ![image](https://drive.google.com/uc?export=view&id=12a1IyI18B4pyAQyXoN82-jcfA7tsNRJW)
 
-    ![](https://drive.google.com/uc?export=view&id=1v3v_j8zPDY01RWRBc-ClO97L_zsRxPli) ![](https://drive.google.com/uc?export=view&id=1qmnnTrs3RF71WiQ5tx4SwJIyPmmlbVS5)
+## Reproduce
 
-- WGAN-GP
+### Training
+- DCGAN
+	```python gans/dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt```
+- WGAN
+	WIP
+- WGAN-GP(CNN)
+	```python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt```
+- WGAN-GP(ResNet)
+	```python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_RES.txt```
+- SNGAN(CNN)
+	```python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_CNN.txt```
+- SNGAN(ResNet)
+	```python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_RES.txt```
 
-    ![](https://drive.google.com/uc?export=view&id=172Nhzr8E_usITv_Z_0JAOKCM2ishyplW) ![](https://drive.google.com/uc?export=view&id=1GRvbxoN-dubX53NtjIg2KXR0i3Ow1WaI)
-
-- SN-GAN
-
-    ![](https://drive.google.com/uc?export=view&id=1itXkiwjemOT2uOjYUIKPr_t7myBjeFz5) ![](https://drive.google.com/uc?export=view&id=1OVvr9xs5pV-BEQ5JlVK_3r4stUcbzox8)
+### Generate GIF
+```bash
+python tools/sample2gif.py --logdir path/to/logdir
+```
+e.g.
+```bash
+python tools/sample2gif.py --logdir ./logs/DCGAN_CIFAR10
+```
+output GIF is `./logs/DCGAN_CIFAR10/progress.gif`

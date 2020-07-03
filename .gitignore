@@ -1,22 +1,18 @@
-# python
-venv
-__pycache__
-
 # vscode
 .vscode
 
+# python
+*venv*
+__pycache__
+
 # log
-log
+logs
+logs_backup
+*.zip
 
 # data
 data
-.fid_cache/
+*.png
 
-# model
-*.pt
-*.pth
-
-# images
-results
-
-*.sh
+# sh
+# *.sh
