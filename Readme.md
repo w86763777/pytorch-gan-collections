@@ -1,6 +1,8 @@
 # Collections of GANs
 
-Pytorch implementation of unsupervised GANs
+Pytorch implementation of unsupervised GANs.
+
+For more defails about calculating Inception Score and FID Score using pytorch can be found in [Pytorch-Unified-Inception-FID-Score](https://github.com/w86763777/Pytorch-Unified-Inception-FID-Score) 
 
 ## Models
 - [x] DCGAN
@@ -21,7 +23,7 @@ Pytorch implementation of unsupervised GANs
 |Model          |Dataset|Inception Score|FID Score|
 |---------------|-------|---------------|---------|
 |DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
-|WGAN           |CIFAR10|6.111(0.088)   |41.75    |
+|WGAN           |CIFAR10|               |         |
 |WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
 |WGAN-GP(ResNet)|CIFAR10|7.693(0.108)   |18.70    |
 |SNGAN(CNN)     |CIFAR10|7.521(0.111)   |20.41    |
@@ -56,17 +58,29 @@ Pytorch implementation of unsupervised GANs
 
 ### Training
 - DCGAN
-	```python gans/dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt```
+	```
+    python gans/dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt
+    ```
 - WGAN
+
 	WIP
+
 - WGAN-GP(CNN)
-	```python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt```
+	```
+    python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt
+    ```
 - WGAN-GP(ResNet)
-	```python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_RES.txt```
+	```
+    python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_RES.txt
+    ```
 - SNGAN(CNN)
-	```python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_CNN.txt```
+	```
+    python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_CNN.txt
+    ```
 - SNGAN(ResNet)
-	```python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_RES.txt```
+	```
+    python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_RES.txt
+    ```
 
 ### Generate GIF
 ```bash
