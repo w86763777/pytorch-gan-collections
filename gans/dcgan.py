@@ -145,17 +145,10 @@ def train():
                 loss.backward()
                 optim_D.step()
 
-                with torch.no_grad():
-                    delta_f = torch.norm(net_D_real - net_D_fake, dim=1)
-                    delta_x = torch.norm(
-                        torch.flatten(real - fake, start_dim=1), dim=1)
-                    slop = delta_f / delta_x
-                    slop = slop.max()
                 if FLAGS.loss == 'was':
                     loss = -loss
-                pbar.set_postfix(loss='%.4f' % loss, slop='%.4f' % slop)
+                pbar.set_postfix(loss='%.4f' % loss)
             writer.add_scalar('loss', loss, step)
-            writer.add_scalar('slop', slop, step)
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)

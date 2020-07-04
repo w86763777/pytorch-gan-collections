@@ -90,8 +90,6 @@ def generate():
 def cacl_gradient_penalty(net_D, real, fake):
     t = torch.rand(real.size(0), 1, 1, 1).to(real.device)
     t = t.expand(real.size())
-    norm = torch.norm(torch.flatten(real - fake, start_dim=1), dim=1)
-    unit_vec = (real - fake) / norm[:, None, None, None]
 
     interpolates = t * real + (1 - t) * fake
     interpolates.requires_grad_(True)
@@ -102,9 +100,8 @@ def cacl_gradient_penalty(net_D, real, fake):
         create_graph=True, retain_graph=True)[0]
 
     grad_norm = torch.norm(torch.flatten(grad, start_dim=1), dim=1)
-    grad_cosine = torch.sum(grad * unit_vec, dim=[1, 2, 3]) / grad_norm
-    loss_norm = torch.mean((grad_norm - 1) ** 2)
-    return loss_norm, grad_cosine, grad_norm
+    loss_gp = torch.mean((grad_norm - 1) ** 2)
+    return loss_gp
 
 
 def train():
@@ -165,28 +162,18 @@ def train():
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
                 loss = loss_fn(net_D_real, net_D_fake)
-                loss_norm, grad_cosine, grad_norm = cacl_gradient_penalty(
-                    net_D, real, fake)
-                loss_all = loss + FLAGS.alpha * loss_norm
+                loss_gp = cacl_gradient_penalty(net_D, real, fake)
+                loss_all = loss + FLAGS.alpha * loss_gp
 
                 optim_D.zero_grad()
                 loss_all.backward()
                 optim_D.step()
 
-                with torch.no_grad():
-                    delta_f = torch.norm(net_D_real - net_D_fake, dim=1)
-                    delta_x = torch.norm(
-                        torch.flatten(real - fake, start_dim=1), dim=1)
-                    slop = delta_f / delta_x
-                    slop = slop.max()
                 if FLAGS.loss == 'was':
                     loss = -loss
-                pbar.set_postfix(loss='%.4f' % loss, slop='%.4f' % slop)
+                pbar.set_postfix(loss='%.4f' % loss)
             writer.add_scalar('loss', loss, step)
-            writer.add_scalar('loss_gp', loss_norm, step)
-            writer.add_scalar('grad_norm', grad_norm.max(), step)
-            writer.add_scalar('grad_cosine', grad_cosine.min(), step)
-            writer.add_scalar('slop', slop, step)
+            writer.add_scalar('loss_gp', loss_gp, step)
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)
