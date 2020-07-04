@@ -189,7 +189,7 @@ def train():
                     'optim_D': optim_D.state_dict(),
                     'sched_G': sched_G.state_dict(),
                     'sched_D': sched_D.state_dict(),
-                }, os.path.join(FLAGS.logdir, '%d.pt' % step))
+                }, os.path.join(FLAGS.logdir, 'model.pt'))
                 if FLAGS.record:
                     imgs = generate_imgs(
                         net_G, device, FLAGS.z_dim, 50000, FLAGS.batch_size)

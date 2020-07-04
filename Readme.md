@@ -6,7 +6,7 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 
 ## Models
 - [x] DCGAN
-- [ ] WGAN
+- [x] WGAN
 - [x] WGAN-GP
 - [x] SN-GAN 
 
@@ -23,7 +23,7 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 |Model          |Dataset|Inception Score|FID Score|
 |---------------|-------|---------------|---------|
 |DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
-|WGAN           |CIFAR10|               |         |
+|WGAN(CNN)      |CIFAR10|6.605(0.071)   |30.73    |
 |WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
 |WGAN-GP(ResNet)|CIFAR10|7.693(0.108)   |18.70    |
 |SNGAN(CNN)     |CIFAR10|7.521(0.111)   |20.41    |
@@ -34,9 +34,9 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 
     ![image](https://drive.google.com/uc?export=view&id=14vz9JTxi4A8p5x2kiS7STnAMMGJb8_U0) ![image](https://drive.google.com/uc?export=view&id=1vCjp-hqNlCIhrzk5sIdl4Ex2FfWg7tCz)
 
-- WGAN
+- WGAN(CNN)
 
-    WIP
+    ![image](https://drive.google.com/uc?export=view&id=12Y5E-Vf-U-fzPLO_bmhhLNK1-q0Lo_OS) ![image](https://drive.google.com/uc?export=view&id=1QHji1gTY9YlIA7G0fdPiNEWHrCMh9TuO)
 
 - WGAN-GP(CNN)
 
@@ -61,10 +61,10 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 	```
     python gans/dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt
     ```
-- WGAN
-
-	WIP
-
+- WGAN(CNN)
+	```
+    python gans/wgan.py --flagfile ./config/WGAN_CIFAR10_CNN.txt
+    ```
 - WGAN-GP(CNN)
 	```
     python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt
