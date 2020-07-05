@@ -25,7 +25,7 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 |DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
 |WGAN(CNN)      |CIFAR10|6.605(0.071)   |30.73    |
 |WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
-|WGAN-GP(ResNet)|CIFAR10|7.693(0.108)   |18.70    |
+|WGAN-GP(ResNet)|CIFAR10|7.829(0.076)   |15.57    |
 |SNGAN(CNN)     |CIFAR10|7.521(0.111)   |20.41    |
 |SNGAN(ResNet)  |CIFAR10|8.214(0.094)   |14.41    |
 
