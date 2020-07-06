@@ -1,10 +1,8 @@
-import argparse
-
 import numpy as np
 import torch
 from tqdm import trange
 
-from inception import InceptionV3
+from .inception import InceptionV3
 
 
 def get_inception_score(images, device, splits=10, batch_size=32,
@@ -37,35 +35,3 @@ def get_inception_score(images, device, splits=10, batch_size=32,
         kl = np.mean(np.sum(kl, 1))
         scores.append(np.exp(kl))
     return np.mean(scores), np.std(scores)
-
-
-def main(args):
-    from torchvision import datasets, transforms
-    device = torch.device('cuda:0')
-
-    dataloader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(
-            args.inception_dir, train=True, download=True,
-            transform=transforms.ToTensor()),
-        batch_size=64, shuffle=False, num_workers=6, drop_last=False)
-
-    images = []
-    for batch_images, _ in dataloader:
-        with torch.no_grad():
-            images.append(batch_images.cpu().numpy())
-    images = np.concatenate(images, axis=0)
-
-    m, s = get_inception_score(
-        images, device, args.splits, args.batch_size, verbose=True)
-    print(m, s)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser("Calculate Inception score of CIFAR10")
-    parser.add_argument("--inception_dir", type=str, default='./data',
-                        help='path to inception model dir')
-    parser.add_argument("--splits", type=int, default=10,
-                        help="bins (original)")
-    parser.add_argument("--batch_size", type=int, default=32,
-                        help="batch size")
-    main(parser.parse_args())

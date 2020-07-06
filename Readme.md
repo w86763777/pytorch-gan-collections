@@ -55,6 +55,8 @@ For more defails about calculating Inception Score and FID Score using pytorch c
     ![image](https://drive.google.com/uc?export=view&id=1CN6vgPqodAQBtp9OElPvCaNakomKKP4E) ![image](./images/sngan_cifar10_res.png)
 
 ## Reproduce
+Download [cifar10_stats.npz](https://drive.google.com/file/d/1vCMd9Q7f6oaVnmaggalGV-LbKk2eXNTQ/view?usp=sharing) for calculating FID score
+and put it to `./stats/cifar10_stats.npz` which is the default path
 
 ### Training
 - DCGAN

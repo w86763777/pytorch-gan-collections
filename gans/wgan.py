@@ -55,7 +55,7 @@ flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
 flags.DEFINE_string('logdir', './logs/WGAN_CIFAR10_RES', 'logging folder')
 flags.DEFINE_bool('record', True, "record inception score and FID score")
-flags.DEFINE_string('fid_cache', './data/cifar10_stats.npz', 'FID cache')
+flags.DEFINE_string('fid_cache', './stats/cifar10_stats.npz', 'FID cache')
 # generate
 flags.DEFINE_bool('generate', False, 'generate images')
 flags.DEFINE_string('pretrain', None, 'path to test model')
