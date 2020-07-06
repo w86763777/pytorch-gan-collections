@@ -32,27 +32,27 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 ## Examples
 - DCGAN
 
-    ![image](https://drive.google.com/uc?export=view&id=14vz9JTxi4A8p5x2kiS7STnAMMGJb8_U0) ![image](https://drive.google.com/uc?export=view&id=1vCjp-hqNlCIhrzk5sIdl4Ex2FfWg7tCz)
+    ![image](https://drive.google.com/uc?export=view&id=14vz9JTxi4A8p5x2kiS7STnAMMGJb8_U0) ![image](./images/dcgan_cifar10.png)
 
 - WGAN(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=12Y5E-Vf-U-fzPLO_bmhhLNK1-q0Lo_OS) ![image](https://drive.google.com/uc?export=view&id=1QHji1gTY9YlIA7G0fdPiNEWHrCMh9TuO)
+    ![image](https://drive.google.com/uc?export=view&id=12Y5E-Vf-U-fzPLO_bmhhLNK1-q0Lo_OS) ![image](./images/wgan_cifar10_cnn.png)
 
 - WGAN-GP(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=1i7B2i_nDZrTyvhOefmEHRs_mGXU7mv4Q) ![image](https://drive.google.com/uc?export=view&id=1Vw1xITa1FtGmMtbgi31f9-Hg6Ca9OYZD)
+    ![image](https://drive.google.com/uc?export=view&id=1i7B2i_nDZrTyvhOefmEHRs_mGXU7mv4Q) ![image](./images/wgangp_cifar10_cnn.png)
 
 - WGAN-GP(ResNet)
 
-    ![image](https://drive.google.com/uc?export=view&id=1WbMPMUwd2ltDkqowBMcIwUWP7dF87LH0) ![image](https://drive.google.com/uc?export=view&id=1Ht3OwRPUpjblETWVXhdWmZmOpcz8Mmxb)
+    ![image](https://drive.google.com/uc?export=view&id=1WbMPMUwd2ltDkqowBMcIwUWP7dF87LH0) ![image](./images/wgangp_cifar10_res.png)
 
 - SNGAN(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=1tQyWeyjNNOlWWBPo2XwhwZQ9t1q5a1v5) ![image](https://drive.google.com/uc?export=view&id=1EnwtSPQnVEJA7ohOGuYEC8nOrRlJnyp2)
+    ![image](https://drive.google.com/uc?export=view&id=1tQyWeyjNNOlWWBPo2XwhwZQ9t1q5a1v5) ![image](./images/sngan_cifar10_cnn.png)
 
 - SNGAN(ResNet)
 
-    ![image](https://drive.google.com/uc?export=view&id=1CN6vgPqodAQBtp9OElPvCaNakomKKP4E) ![image](https://drive.google.com/uc?export=view&id=12a1IyI18B4pyAQyXoN82-jcfA7tsNRJW)
+    ![image](https://drive.google.com/uc?export=view&id=1CN6vgPqodAQBtp9OElPvCaNakomKKP4E) ![image](./images/sngan_cifar10_res.png)
 
 ## Reproduce
 
