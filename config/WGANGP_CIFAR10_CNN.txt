@@ -2,7 +2,7 @@
 --arch=cnn32
 --batch_size=128
 --dataset=cifar10
---fid_cache=./data/cifar10_stats.npz
+--fid_cache=./stats/cifar10_stats.npz
 --logdir=./logs/WGANGP_CIFAR10_CNN
 --loss=was
 --lr_D=0.0002
