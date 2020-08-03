@@ -114,8 +114,8 @@ def train():
     net_D = models.GradNorm(net_D_models[FLAGS.arch]().to(device))
     loss_fn = loss_fns[FLAGS.loss]()
 
-    models.conv_weights_init(net_G)
-    models.conv_weights_init(net_D)
+    # models.conv_weights_init(net_G)
+    # models.conv_weights_init(net_D)
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
     optim_D = optim.Adam(net_D.parameters(), lr=FLAGS.lr_D, betas=FLAGS.betas)

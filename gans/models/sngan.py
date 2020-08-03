@@ -27,7 +27,7 @@ class Generator(nn.Module):
             nn.ReLU(True),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1, bias=False),
             nn.Tanh())
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, z):
         x = self.linear(z)
@@ -70,7 +70,7 @@ class Discriminator(nn.Module):
 
         self.linear = spectral_norm(
             nn.Linear(M // 8 * M // 8 * 512, 1, bias=False))
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, x):
         x = self.main(x)
@@ -135,7 +135,7 @@ class ResGenerator32(nn.Module):
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -158,7 +158,7 @@ class ResGenerator48(nn.Module):
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -217,7 +217,7 @@ class ResDiscriminator32(nn.Module):
             ResDisBlock(128, 128),
             nn.ReLU())
         self.linear = spectral_norm(nn.Linear(128, 1, bias=False))
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, x):
         x = self.model(x).sum(dim=[2, 3])
@@ -235,7 +235,7 @@ class ResDiscriminator48(nn.Module):
             ResDisBlock(256, 512, down=True),
             nn.ReLU())
         self.linear = spectral_norm(nn.Linear(512, 1, bias=False))
-        res_arch_init(self)
+        weights_init(self)
 
     def forward(self, x):
         x = self.model(x).sum(dim=[2, 3])
@@ -243,7 +243,7 @@ class ResDiscriminator48(nn.Module):
         return x
 
 
-def res_arch_init(model):
+def weights_init(model):
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
             if 'residual' in name:
