@@ -40,7 +40,6 @@ class Generator(nn.Module):
             nn.ReLU(True),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1, bias=False),
             nn.Tanh())
-        weights_init(self)
 
     def forward(self, z):
         x = self.linear(z)
@@ -82,7 +81,6 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.1, inplace=True))
 
         self.linear = nn.Linear(M // 8 * M // 8 * 512, 1, bias=False)
-        weights_init(self)
 
     def forward(self, x):
         x = self.main(x)
@@ -147,7 +145,6 @@ class ResGenerator32(nn.Module):
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -170,7 +167,6 @@ class ResGenerator48(nn.Module):
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -230,7 +226,6 @@ class ResDiscriminator32(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(128, 1)
-        weights_init(self)
 
     def forward(self, x):
         x = self.model(x)
@@ -250,7 +245,6 @@ class ResDiscriminator48(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(512, 1)
-        weights_init(self)
 
     def forward(self, x):
         x = self.model(x).sum(dim=[2, 3])
@@ -260,7 +254,7 @@ class ResDiscriminator48(nn.Module):
 
 
 def weights_init(m):
-    modules = (torch.nn.Conv2d, torch.nn.ConvTranspose2d, torch.nn.Linear)
+    modules = (torch.nn.Conv2d, torch.nn.ConvTranspose2d)
     for param in m.modules():
         if isinstance(param, modules):
             torch.nn.init.xavier_normal_(param.weight.data)
