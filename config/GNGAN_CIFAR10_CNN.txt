@@ -1,0 +1,16 @@
+--arch=cnn32
+--batch_size=128
+--dataset=cifar10
+--fid_cache=./stats/cifar10_stats.npz
+--logdir=./logs/GNGAN_CIFAR10_CNN
+--loss=bce
+--lr_D=0.0002
+--lr_G=0.0002
+--n_dis=1
+--num_images=50000
+--record
+--sample_step=500
+--sample_size=64
+--seed=0
+--total_steps=100000
+--z_dim=100
