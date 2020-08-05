@@ -131,7 +131,7 @@ class ResGenerator32(nn.Module):
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        # res_arch_init(self)
+        weight_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -154,7 +154,7 @@ class ResGenerator48(nn.Module):
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        # res_arch_init(self)
+        weight_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -214,7 +214,7 @@ class ResDiscriminator32(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(128, 1)
-        # res_arch_init(self)
+        weight_init(self)
 
     def forward(self, x):
         x = self.model(x)
@@ -234,7 +234,7 @@ class ResDiscriminator48(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(512, 1)
-        # res_arch_init(self)
+        weight_init(self)
 
     def forward(self, x):
         x = self.model(x).sum(dim=[2, 3])
@@ -243,7 +243,7 @@ class ResDiscriminator48(nn.Module):
         return x
 
 
-def res_arch_init(model):
+def weight_init(model):
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
             if 'residual' in name:

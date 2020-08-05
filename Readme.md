@@ -22,7 +22,7 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 
 |Model          |Dataset|Inception Score|FID Score|
 |---------------|-------|---------------|---------|
-|DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
+|DCGAN          |CIFAR10|6.524(0.057)   |37.35    |
 |WGAN(CNN)      |CIFAR10|6.605(0.071)   |30.73    |
 |WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
 |WGAN-GP(ResNet)|CIFAR10|7.829(0.076)   |15.57    |
@@ -93,3 +93,9 @@ e.g.
 python tools/sample2gif.py --logdir ./logs/DCGAN_CIFAR10
 ```
 output GIF is `./logs/DCGAN_CIFAR10/progress.gif`
+
+## Notes
+Due to nondetermnistic operations such as `atomicAdd`, the
+[reproducibility](https://pytorch.org/docs/stable/notes/randomness.html) is
+not guaranteed on all devices in this repository even I set random seed for all the used packages. All the experimental results were produced on single NVIDIA-2080Ti, if any body want to reproduce results, you should prepare
+same GPU for exactly same outputs.
