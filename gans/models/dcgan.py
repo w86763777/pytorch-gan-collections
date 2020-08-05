@@ -22,6 +22,7 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(128, 3, 4, stride=2, padding=1, bias=False),
             nn.Tanh()
         )
+        weights_init(self)
 
     def forward(self, z):
         return self.main(z.view(-1, self.z_dim, 1, 1))
@@ -49,8 +50,8 @@ class Discriminator(nn.Module):
             nn.BatchNorm2d(512)
             # 4
         )
-
         self.linear = nn.Linear(M // 16 * M // 16 * 512, 1)
+        weights_init(self)
 
     def forward(self, x):
         x = self.main(x)
@@ -77,3 +78,12 @@ class Discriminator32(Discriminator):
 class Discriminator48(Discriminator):
     def __init__(self):
         super().__init__(M=48)
+
+
+def weights_init(m):
+    modules = (torch.nn.Conv2d, torch.nn.ConvTranspose2d)
+    for param in m.modules():
+        if isinstance(param, modules):
+            torch.nn.init.xavier_normal_(param.weight.data)
+            if param.bias is not None:
+                torch.nn.init.zeros_(param.bias.data)
