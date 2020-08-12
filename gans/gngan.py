@@ -49,6 +49,7 @@ flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'hinge', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
+# flags.DEFINE_integer('train_seed', 0, "random seed for training")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
@@ -114,8 +115,8 @@ def train():
     net_D = models.GradNorm(net_D_models[FLAGS.arch]().to(device))
     loss_fn = loss_fns[FLAGS.loss]()
 
-    models.weights_init(net_G)
-    models.weights_init(net_D)
+    # models.weights_init(net_G)
+    # models.weights_init(net_D)
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
     optim_D = optim.Adam(net_D.parameters(), lr=FLAGS.lr_D, betas=FLAGS.betas)
@@ -136,6 +137,7 @@ def train():
     grid = (make_grid(real[:FLAGS.sample_size]) + 1) / 2
     writer.add_image('real_sample', grid)
 
+    # set_seed(FLAGS.train_seed)
     looper = infiniteloop(dataloader)
     with trange(1, FLAGS.total_steps + 1, dynamic_ncols=True) as pbar:
         for step in pbar:
