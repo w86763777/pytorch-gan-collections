@@ -149,7 +149,7 @@ def train():
                 real = next(looper).to(device)
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
-                loss = loss_fn(net_D_real, net_D_fake)
+                loss, loss_real, loss_fake = loss_fn(net_D_real, net_D_fake)
 
                 optim_D.zero_grad()
                 loss.backward()
@@ -159,6 +159,8 @@ def train():
                     loss = -loss
                 pbar.set_postfix(loss='%.4f' % loss)
             writer.add_scalar('loss', loss, step)
+            writer.add_scalar('loss_real', loss_real, step)
+            writer.add_scalar('loss_fake', loss_fake, step)
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)

@@ -144,7 +144,7 @@ def train():
                 real = next(looper).to(device)
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
-                loss = loss_fn(net_D_real, net_D_fake)
+                loss, _, _ = loss_fn(net_D_real, net_D_fake)
 
                 optim_D.zero_grad()
                 loss.backward()

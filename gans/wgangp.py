@@ -161,7 +161,7 @@ def train():
                 real = next(looper).to(device)
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
-                loss = loss_fn(net_D_real, net_D_fake)
+                loss, _, _ = loss_fn(net_D_real, net_D_fake)
                 loss_gp = cacl_gradient_penalty(net_D, real, fake)
                 loss_all = loss + FLAGS.alpha * loss_gp
 
