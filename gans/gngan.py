@@ -164,10 +164,20 @@ def train():
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)
-            loss = loss_fn(net_D(net_G(z)))
+            x = net_G(z)
+            x.retain_grad()
+            loss = loss_fn(net_D(x))
 
             optim_G.zero_grad()
             loss.backward()
+            # grad = x.grad
+            # norm = torch.flatten(
+            #     (grad * grad), start_dim=1).sum(dim=1).sqrt().sum()
+            # norm = torch.abs(norm) + 1e-7
+            # for param in net_G.parameters():
+            #     if param.requires_grad:
+            #         param.grad /= norm
+            # writer.add_scalar('avg_grad_norm', norm, step)
             optim_G.step()
 
             sched_G.step()
