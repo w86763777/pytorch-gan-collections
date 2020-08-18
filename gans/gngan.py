@@ -158,7 +158,14 @@ def train():
                 if FLAGS.loss == 'was':
                     loss = -loss
                 pbar.set_postfix(loss='%.4f' % loss)
+
+            with torch.no_grad():
+                slop = torch.abs(net_D_real - net_D_fake) / torch.norm(
+                    torch.flatten(real - fake, start_dim=1),
+                    p=2, dim=1, keepdim=True)
+                slop = slop.mean()
             writer.add_scalar('loss', loss, step)
+            writer.add_scalar('slop', slop, step)
             writer.add_scalar('loss_real', loss_real, step)
             writer.add_scalar('loss_fake', loss_fake, step)
 
@@ -170,15 +177,11 @@ def train():
 
             optim_G.zero_grad()
             loss.backward()
-            # grad = x.grad
-            # norm = torch.flatten(
-            #     (grad * grad), start_dim=1).sum(dim=1).sqrt().sum()
-            # norm = torch.abs(norm) + 1e-7
-            # for param in net_G.parameters():
-            #     if param.requires_grad:
-            #         param.grad /= norm
-            # writer.add_scalar('avg_grad_norm', norm, step)
             optim_G.step()
+
+            avg_grad_norm = torch.norm(torch.flatten(
+                (x.grad * x.shape[0]), start_dim=1), p=2, dim=1).mean()
+            writer.add_scalar('avg_grad_norm', avg_grad_norm, step)
 
             sched_G.step()
             sched_D.step()

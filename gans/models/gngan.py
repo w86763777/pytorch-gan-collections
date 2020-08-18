@@ -19,6 +19,20 @@ class GradNorm(nn.Module):
         return fx
 
 
+class NormalizeGradients(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        return x
+
+    @staticmethod
+    def backward(ctx, grad):
+        # print(grad.shape)
+        norm = (grad * grad).sum(dim=[1, 2, 3], keepdim=True).sqrt()
+        norm = torch.abs(norm * grad.shape[0])
+        # print(norm.shape, norm)
+        return grad / (norm + 1e-7)
+
+
 class Generator(nn.Module):
     def __init__(self, z_dim, M=4):
         super().__init__()
@@ -263,6 +277,6 @@ def weights_init(m):
     modules = (torch.nn.Conv2d, torch.nn.ConvTranspose2d)
     for param in m.modules():
         if isinstance(param, modules):
-            torch.nn.init.xavier_uniform_(param.weight.data)
+            torch.nn.init.kaiming_normal_(param.weight.data)
             if param.bias is not None:
                 torch.nn.init.zeros_(param.bias.data)
