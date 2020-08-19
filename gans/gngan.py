@@ -168,7 +168,7 @@ def train():
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)
             x = net_G(z)
             x.retain_grad()
-            loss = loss_fn(models.grad_norm(net_D, x))
+            loss = loss_fn(net_D(x))
 
             optim_G.zero_grad()
             loss.backward()
