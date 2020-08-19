@@ -15,22 +15,8 @@ class GradNorm(nn.Module):
             retain_graph=True)[0]
         grad_norm = torch.norm(grad_x.view(grad_x.size(0), -1), dim=1)
         grad_norm = grad_norm.view(-1, *[1 for _ in range(len(fx.shape) - 1)])
-        fx = (fx / grad_norm)
+        fx = (fx / (grad_norm + 1e-7))
         return fx
-
-
-class NormalizeGradients(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, x):
-        return x
-
-    @staticmethod
-    def backward(ctx, grad):
-        # print(grad.shape)
-        norm = (grad * grad).sum(dim=[1, 2, 3], keepdim=True).sqrt()
-        norm = torch.abs(norm * grad.shape[0])
-        # print(norm.shape, norm)
-        return grad / (norm + 1e-7)
 
 
 class Generator(nn.Module):
