@@ -111,7 +111,7 @@ def train():
         drop_last=True)
 
     net_G = net_G_models[FLAGS.arch](FLAGS.z_dim).to(device)
-    net_D = net_D_models[FLAGS.arch]().to(device)
+    net_D = models.GradNorm(net_D_models[FLAGS.arch]()).to(device)
     loss_fn = loss_fns[FLAGS.loss]()
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
