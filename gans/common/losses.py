@@ -8,7 +8,8 @@ class BCEWithLogits(nn.BCEWithLogitsLoss):
         if pred_fake is not None:
             loss_real = super().forward(pred_real, torch.ones_like(pred_real))
             loss_fake = super().forward(pred_fake, torch.zeros_like(pred_fake))
-            return loss_real + loss_fake, loss_real, loss_fake
+            loss = loss_real + loss_fake
+            return loss, loss_real, loss_fake
         else:
             loss = super().forward(pred_real, torch.ones_like(pred_real))
             return loss
@@ -19,7 +20,8 @@ class Hinge(nn.Module):
         if pred_fake is not None:
             loss_real = F.relu(1 - pred_real).mean()
             loss_fake = F.relu(1 + pred_fake).mean()
-            return loss_real + loss_fake, loss_real, loss_fake
+            loss = loss_real + loss_fake
+            return loss, loss_real, loss_fake
         else:
             loss = -pred_real.mean()
             return loss
@@ -30,8 +32,8 @@ class Wasserstein(nn.Module):
         if pred_fake is not None:
             loss_real = -pred_real.mean()
             loss_fake = pred_fake.mean()
-            loss = loss_real + loss_fake, loss_real, loss_fake
-            return loss
+            loss = loss_real + loss_fake
+            return loss, loss_real, loss_fake
         else:
             loss = -pred_real.mean()
             return loss

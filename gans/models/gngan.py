@@ -15,7 +15,7 @@ class GradNorm(nn.Module):
             retain_graph=True)[0]
         grad_norm = torch.norm(grad_x.view(grad_x.size(0), -1), dim=1)
         grad_norm = grad_norm.view(-1, *[1 for _ in range(len(fx.shape) - 1)])
-        fx = (fx / (grad_norm + torch.abs(fx) + 1e-7))
+        fx = (fx / (grad_norm + torch.abs(fx)))
         return fx
 
 
