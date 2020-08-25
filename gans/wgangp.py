@@ -161,7 +161,7 @@ def train():
                 real = next(looper).to(device)
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
-                loss, _, _ = loss_fn(net_D_real, net_D_fake)
+                loss, loss_real, loss_fake = loss_fn(net_D_real, net_D_fake)
                 loss_gp = cacl_gradient_penalty(net_D, real, fake)
                 loss_all = loss + FLAGS.alpha * loss_gp
 
@@ -172,16 +172,28 @@ def train():
                 if FLAGS.loss == 'was':
                     loss = -loss
                 pbar.set_postfix(loss='%.4f' % loss)
+
+            with torch.no_grad():
+                slop = torch.abs(net_D_real - net_D_fake) / torch.norm(
+                    torch.flatten(real - fake, start_dim=1),
+                    p=2, dim=1, keepdim=True)
+                slop = slop.mean()
             writer.add_scalar('loss', loss, step)
             writer.add_scalar('loss_gp', loss_gp, step)
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)
-            loss = loss_fn(net_D(net_G(z)))
+            x = net_G(z)
+            x.retain_grad()
+            loss = loss_fn(net_D(x))
 
             optim_G.zero_grad()
             loss.backward()
             optim_G.step()
+
+            avg_grad_norm = torch.norm(torch.flatten(
+                (x.grad * x.shape[0]), start_dim=1), p=2, dim=1).mean()
+            writer.add_scalar('avg_grad_norm', avg_grad_norm, step)
 
             sched_G.step()
             sched_D.step()
