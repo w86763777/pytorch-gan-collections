@@ -8,18 +8,22 @@ from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
 
-import models.dcgan as models
+import models.wgangp as models
 import common.losses as losses
 from common.utils import generate_imgs, infiniteloop, set_seed
 from common.score.score import get_inception_and_fid_score
 
 
 net_G_models = {
+    'res32': models.ResGenerator32,
+    'res48': models.ResGenerator48,
     'cnn32': models.Generator32,
     'cnn48': models.Generator48,
 }
 
 net_D_models = {
+    'res32': models.ResDiscriminator32,
+    'res48': models.ResDiscriminator48,
     'cnn32': models.Discriminator32,
     'cnn48': models.Discriminator48,
 }
@@ -35,13 +39,13 @@ FLAGS = flags.FLAGS
 # model and training
 flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
 flags.DEFINE_enum('arch', 'cnn32', net_G_models.keys(), "architecture")
-flags.DEFINE_integer('total_steps', 50000, "total number of training steps")
+flags.DEFINE_integer('total_steps', 100000, "total number of training steps")
 flags.DEFINE_integer('batch_size', 128, "batch size")
 flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
 flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
-flags.DEFINE_multi_float('betas', [0.5, 0.9], "for Adam")
+flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
 flags.DEFINE_integer('n_dis', 1, "update Generator every this steps")
-flags.DEFINE_integer('z_dim', 100, "latent space dimension")
+flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'bce', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging

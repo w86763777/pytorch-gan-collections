@@ -13,4 +13,4 @@
 --sample_size=64
 --seed=0
 --total_steps=100000
---z_dim=100
+--z_dim=128

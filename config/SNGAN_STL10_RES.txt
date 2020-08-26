@@ -1,12 +1,12 @@
---arch=cnn48
---batch_size=128
+--arch=res48
+--batch_size=64
 --dataset=stl10
 --fid_cache=./stats/stl10_stats.npz
---logdir=./logs/GNGAN_STL10_CNN
+--logdir=./logs/SNGAN_STL10_RES
 --loss=hinge
 --lr_D=0.0002
 --lr_G=0.0002
---n_dis=1
+--n_dis=5
 --num_images=50000
 --record
 --sample_step=500

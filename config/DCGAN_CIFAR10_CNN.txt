@@ -1,10 +1,9 @@
---c=0.1
 --arch=cnn32
 --batch_size=128
 --dataset=cifar10
 --fid_cache=./stats/cifar10_stats.npz
---logdir=./logs/WGAN_CIFAR10_CNN
---loss=was
+--logdir=./logs/DCGAN_CIFAR10_CNN
+--loss=bce
 --lr_D=0.0002
 --lr_G=0.0002
 --n_dis=1
