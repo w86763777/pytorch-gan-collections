@@ -50,7 +50,6 @@ flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'hinge', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 flags.DEFINE_float('alpha', 10, "Consistency penalty")
-# flags.DEFINE_integer('train_seed', 0, "random seed for training")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
@@ -111,18 +110,17 @@ def train():
     consistency_transforms = transforms.Compose([
         transforms.Lambda(lambda x: (x + 1) / 2),
         transforms.ToPILImage(mode='RGB'),
-        transforms.RandomAffine(0, translate=(0.2, 0.2)),
         transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomAffine(0, translate=(0.2, 0.2)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        transforms.Lambda(lambda x: x + torch.rand_like(x) / 128)
     ])
+
     def consistency_transform_func(images):
         images = deepcopy(images)
         for idx, img in enumerate(images):
             images[idx] = consistency_transforms(img)
         return images
-
 
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=FLAGS.batch_size, shuffle=True, num_workers=4,
@@ -131,9 +129,6 @@ def train():
     net_G = net_G_models[FLAGS.arch](FLAGS.z_dim).to(device)
     net_D = models.GradNorm(net_D_models[FLAGS.arch]().to(device))
     loss_fn = loss_fns[FLAGS.loss]()
-
-    # models.weights_init(net_G)
-    # models.weights_init(net_D)
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
     optim_D = optim.Adam(net_D.parameters(), lr=FLAGS.lr_D, betas=FLAGS.betas)
@@ -159,7 +154,6 @@ def train():
     writer.add_image('augment_real_sample', grid)
     writer.flush()
 
-    # set_seed(FLAGS.train_seed)
     looper = infiniteloop(dataloader)
     with trange(1, FLAGS.total_steps + 1, dynamic_ncols=True) as pbar:
         for step in pbar:
@@ -177,7 +171,7 @@ def train():
                 net_D_fake = net_D(fake)
                 loss, loss_real, loss_fake = loss_fn(net_D_real, net_D_fake)
 
-                loss_cs = ((net_D(real) - net_D(augment_real))**2).sum()
+                loss_cs = ((net_D_real - net_D(augment_real))**2).mean()
                 loss_all = loss + FLAGS.alpha * loss_cs
 
                 optim_D.zero_grad()

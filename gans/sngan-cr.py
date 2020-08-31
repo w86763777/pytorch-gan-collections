@@ -44,12 +44,12 @@ flags.DEFINE_integer('total_steps', 100000, "total number of training steps")
 flags.DEFINE_integer('batch_size', 64, "batch size")
 flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
 flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
-flags.DEFINE_float('alpha', 10, "Consistency penalty")
 flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
 flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'hinge', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
+flags.DEFINE_float('alpha', 10, "Consistency penalty")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
@@ -88,20 +88,14 @@ def generate():
                 counter += 1
 
 
-def consistency_transform_func(images):
-    images = deepcopy(images)
-    for idx, img in enumerate(images):
-        images[idx] = consistency_transforms(img)
-    return images
-
 def train():
     if FLAGS.dataset == 'cifar10':
         dataset = datasets.CIFAR10(
             './data', train=True, download=True,
             transform=transforms.Compose([
+                transforms.RandomHorizontalFlip(p=0.5),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                transforms.Lambda(lambda x: x + torch.rand_like(x) / 128)
             ]))
     if FLAGS.dataset == 'stl10':
         dataset = datasets.STL10(
@@ -114,17 +108,14 @@ def train():
 
             ]))
 
-
     consistency_transforms = transforms.Compose([
         transforms.Lambda(lambda x: (x + 1) / 2),
         transforms.ToPILImage(mode='RGB'),
-        transforms.RandomAffine(0, translate=(0.2, 0.2)),
         transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomAffine(0, translate=(0.2, 0.2)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        transforms.Lambda(lambda x: x + torch.rand_like(x) / 128)
     ])
-
 
     def consistency_transform_func(images):
         images = deepcopy(images)
@@ -156,16 +147,13 @@ def train():
         "flagfile", FLAGS.flags_into_string().replace('\n', '  \n'))
 
     real, _ = next(iter(dataloader))
-
     aug_real = consistency_transform_func(real)
-
 
     grid = (make_grid(real[:FLAGS.sample_size]) + 1) / 2
     writer.add_image('real_sample', grid)
     grid = (make_grid(aug_real[:FLAGS.sample_size]) + 1) / 2
     writer.add_image('augment_real_sample', grid)
     writer.flush()
-
 
     looper = infiniteloop(dataloader)
     with trange(1, FLAGS.total_steps + 1, dynamic_ncols=True) as pbar:
@@ -182,9 +170,9 @@ def train():
 
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
-                loss, _, _ = loss_fn(net_D_real, net_D_fake)
+                loss, loss_real, loss_fake = loss_fn(net_D_real, net_D_fake)
 
-                loss_cs = ((net_D(real) - net_D(augment_real))**2).sum()
+                loss_cs = ((net_D_real - net_D(augment_real))**2).mean()
                 loss_all = loss + FLAGS.alpha * loss_cs
 
                 optim_D.zero_grad()
