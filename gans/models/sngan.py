@@ -38,6 +38,8 @@ class Generator(nn.Module):
         return x
 
 
+# In CR-SNGAN, the channel sizes are    [64, 128, 128, 256, 256, 512, 512]
+# In SNGAN, the channel sizes are       [64, 64, 128, 128, 256, 256, 512]
 class Discriminator(nn.Module):
     def __init__(self, M=32):
         super().__init__()
