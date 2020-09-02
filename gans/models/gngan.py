@@ -1,5 +1,10 @@
+from functools import partial
+
 import torch
 import torch.nn as nn
+
+
+Activation = partial(nn.Softplus)
 
 
 class GradNorm(nn.Module):
@@ -27,16 +32,16 @@ class Generator(nn.Module):
         self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            Activation(),
             nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
-            nn.ReLU(True),
+            Activation(),
             nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(True),
+            Activation(),
             nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(True),
+            Activation(),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh())
         dcgan_weights_init(self)
@@ -56,22 +61,22 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             # M
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 2
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 4
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 8
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1, inplace=True))
+            Activation())
 
         self.linear = nn.Linear(M // 8 * M // 8 * 512, 1)
         dcgan_weights_init(self)
@@ -108,11 +113,11 @@ class ResGenBlock(nn.Module):
         super().__init__()
         self.residual = nn.Sequential(
             nn.BatchNorm2d(in_channels),
-            nn.ReLU(),
+            Activation(),
             nn.Upsample(scale_factor=2),
             nn.Conv2d(in_channels, out_channels, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1),
         )
         self.shortcut = nn.Sequential(
@@ -135,7 +140,7 @@ class ResGenerator32(nn.Module):
             ResGenBlock(256, 256),
             ResGenBlock(256, 256),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -158,7 +163,7 @@ class ResGenerator48(nn.Module):
             ResGenBlock(256, 128),
             ResGenBlock(128, 64),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -178,7 +183,7 @@ class OptimizedResDisblock(nn.Module):
             nn.Conv2d(in_channels, out_channels, 1, 1, 0))
         self.residual = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(out_channels, out_channels, 3, 1, 1),
             nn.AvgPool2d(2))
 
@@ -198,9 +203,9 @@ class ResDisBlock(nn.Module):
         self.shortcut = nn.Sequential(*shortcut)
 
         residual = [
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(out_channels, out_channels, 3, 1, 1),
         ]
         if down:
@@ -219,7 +224,7 @@ class ResDiscriminator32(nn.Module):
             ResDisBlock(128, 128, down=True),
             ResDisBlock(128, 128),
             ResDisBlock(128, 128),
-            nn.ReLU(),
+            Activation(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(128, 1)
         weights_init(self)
@@ -239,7 +244,7 @@ class ResDiscriminator48(nn.Module):
             ResDisBlock(64, 128, down=True),
             ResDisBlock(128, 256, down=True),
             ResDisBlock(256, 512, down=True),
-            nn.ReLU(),
+            Activation(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(512, 1)
         weights_init(self)

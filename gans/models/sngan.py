@@ -1,9 +1,13 @@
 import math
+from functools import partial
 
 import torch
 import torch.nn as nn
-import torch.nn.init as init
+
 from torch.nn.utils.spectral_norm import spectral_norm
+
+
+Activation = partial(nn.SELU)
 
 
 class Generator(nn.Module):
@@ -14,19 +18,19 @@ class Generator(nn.Module):
         self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            Activation(),
             nn.ConvTranspose2d(
                 512, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
-            nn.ReLU(True),
+            Activation(),
             nn.ConvTranspose2d(
                 256, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(True),
+            Activation(),
             nn.ConvTranspose2d(
                 128, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(True),
+            Activation(),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh())
         dcgan_weights_init(self)
@@ -49,28 +53,28 @@ class Discriminator(nn.Module):
             # M
             spectral_norm(
                 nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             spectral_norm(
                 nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 2
             spectral_norm(
                 nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             spectral_norm(
                 nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 4
             spectral_norm(
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             spectral_norm(
                 nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True),
+            Activation(),
             # M / 8
             spectral_norm(
                 nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)),
-            nn.LeakyReLU(0.1, inplace=True))
+            Activation())
 
         self.linear = spectral_norm(nn.Linear(M // 8 * M // 8 * 512, 1))
         dcgan_weights_init(self)
@@ -107,11 +111,11 @@ class ResGenBlock(nn.Module):
         super().__init__()
         self.residual = nn.Sequential(
             nn.BatchNorm2d(in_channels),
-            nn.ReLU(),
+            Activation(),
             nn.Upsample(scale_factor=2),
             nn.Conv2d(in_channels, out_channels, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1),
         )
         self.shortcut = nn.Sequential(
@@ -134,7 +138,7 @@ class ResGenerator32(nn.Module):
             ResGenBlock(256, 256),
             ResGenBlock(256, 256),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -157,7 +161,7 @@ class ResGenerator48(nn.Module):
             ResGenBlock(256, 128),
             ResGenBlock(128, 64),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            Activation(),
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -177,7 +181,7 @@ class OptimizedResDisblock(nn.Module):
             spectral_norm(nn.Conv2d(in_channels, out_channels, 1, 1, 0)))
         self.residual = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            nn.ReLU(),
+            Activation(),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
             nn.AvgPool2d(2))
 
@@ -197,9 +201,9 @@ class ResDisBlock(nn.Module):
         self.shortcut = nn.Sequential(*shortcut)
 
         residual = [
-            nn.ReLU(),
+            Activation(),
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            nn.ReLU(),
+            Activation(),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
         ]
         if down:
@@ -218,7 +222,7 @@ class ResDiscriminator32(nn.Module):
             ResDisBlock(128, 128, down=True),
             ResDisBlock(128, 128),
             ResDisBlock(128, 128),
-            nn.ReLU())
+            Activation())
         self.linear = spectral_norm(nn.Linear(128, 1, bias=False))
         weights_init(self)
 
@@ -236,7 +240,7 @@ class ResDiscriminator48(nn.Module):
             ResDisBlock(64, 128, down=True),
             ResDisBlock(128, 256, down=True),
             ResDisBlock(256, 512, down=True),
-            nn.ReLU())
+            Activation())
         self.linear = spectral_norm(nn.Linear(512, 1, bias=False))
         weights_init(self)
 
@@ -250,20 +254,20 @@ def weights_init(model):
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
             if 'residual' in name:
-                init.xavier_uniform_(module.weight, gain=math.sqrt(2))
+                torch.nn.init.xavier_uniform_(module.weight, gain=math.sqrt(2))
             else:
-                init.xavier_uniform_(module.weight, gain=1.0)
+                torch.nn.init.xavier_uniform_(module.weight, gain=1.0)
             if module.bias is not None:
-                init.zeros_(module.bias)
+                torch.nn.init.zeros_(module.bias)
         if isinstance(module, nn.Linear):
-            init.xavier_uniform_(module.weight, gain=1.0)
+            torch.nn.init.xavier_uniform_(module.weight, gain=1.0)
             if module.bias is not None:
-                init.zeros_(module.bias)
+                torch.nn.init.zeros_(module.bias)
 
 
 def dcgan_weights_init(model):
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear)):
-            init.normal_(module.weight, std=0.02)
+            torch.nn.init.normal_(module.weight, std=0.02)
             if module.bias is not None:
-                init.zeros_(module.bias)
+                torch.nn.init.zeros_(module.bias)
