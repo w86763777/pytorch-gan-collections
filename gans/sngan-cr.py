@@ -105,7 +105,6 @@ def train():
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                 transforms.Lambda(lambda x: x + torch.rand_like(x) / 128)
-
             ]))
 
     consistency_transforms = transforms.Compose([

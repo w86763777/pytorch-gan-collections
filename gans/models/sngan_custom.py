@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
-from gans.models.spectral_norm import spectral_norm
+from .spectral_norm import spectral_norm
 
 
 class Generator(nn.Module):
@@ -187,7 +187,7 @@ class OptimizedResDisblock(nn.Module):
         super().__init__()
         self.shortcut = spectral_norm(
             nn.Conv2d(in_channels, out_channels, 1, 1, 0),
-            dim=(in_channels, size, size))
+            dim=(in_channels, size // 2, size // 2))
         self.residual = nn.Sequential(
             spectral_norm(
                 nn.Conv2d(in_channels, out_channels, 3, 1, 1),
