@@ -12,18 +12,17 @@ class Generator(nn.Module):
         self.M = M
         self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
-            nn.ConvTranspose2d(
-                512, 256, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.ConvTranspose2d(
-                256, 128, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.ConvTranspose2d(
-                128, 64, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh())
 
@@ -41,30 +40,23 @@ class Discriminator(nn.Module):
 
         self.main = nn.Sequential(
             # M
-            nn.Conv2d(
-                3, 64, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1),
-            nn.Conv2d(
-                64, 64, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1),
+            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
             # M / 2
-            nn.Conv2d(
-                64, 128, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1),
-            nn.Conv2d(
-                128, 128, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1),
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
             # M / 4
-            nn.Conv2d(
-                128, 256, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1),
-            nn.Conv2d(
-                256, 256, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.1),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.1, inplace=True),
             # M / 8
-            nn.Conv2d(
-                256, 512, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.1))
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1, inplace=True))
 
         self.linear = nn.Linear(M // 8 * M // 8 * 512, 1)
 
@@ -131,7 +123,7 @@ class ResGenerator32(nn.Module):
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        weight_init(self)
+        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -154,7 +146,7 @@ class ResGenerator48(nn.Module):
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
-        weight_init(self)
+        weights_init(self)
 
     def forward(self, z):
         inputs = self.linear(z)
@@ -214,7 +206,7 @@ class ResDiscriminator32(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(128, 1)
-        weight_init(self)
+        weights_init(self)
 
     def forward(self, x):
         x = self.model(x)
@@ -234,7 +226,7 @@ class ResDiscriminator48(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)))
         self.linear = nn.Linear(512, 1)
-        weight_init(self)
+        weights_init(self)
 
     def forward(self, x):
         x = self.model(x).sum(dim=[2, 3])
@@ -243,7 +235,7 @@ class ResDiscriminator48(nn.Module):
         return x
 
 
-def weight_init(model):
+def weights_init(model):
     for name, module in model.named_modules():
         if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
             if 'residual' in name:

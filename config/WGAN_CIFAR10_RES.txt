@@ -8,6 +8,7 @@
 --lr_D=0.0001
 --lr_G=0.0001
 --n_dis=5
+--scheduler
 --num_images=50000
 --record
 --sample_step=500
