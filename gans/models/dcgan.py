@@ -3,55 +3,69 @@ import torch.nn as nn
 
 
 class Generator(nn.Module):
-    def __init__(self, z_dim, M):
-        super(Generator, self).__init__()
+    def __init__(self, z_dim, M=4):
+        super().__init__()
         self.z_dim = z_dim
+        self.M = M
+        self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
-            nn.ConvTranspose2d(self.z_dim, 1024, M, 1, 0, bias=False),  # 4, 4
-            nn.BatchNorm2d(1024),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(1024, 512, 4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(512),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(512, 256, 4, stride=2, padding=1, bias=False),
+            nn.ReLU(),
+            nn.ConvTranspose2d(
+                512, 256, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
-            nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1, bias=False),
+            nn.ConvTranspose2d(
+                256, 128, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
-            nn.ConvTranspose2d(128, 3, 4, stride=2, padding=1, bias=False),
-            nn.Tanh()
-        )
-        weights_init(self)
+            nn.ConvTranspose2d(
+                128, 64, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+            nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Tanh())
 
     def forward(self, z):
-        return self.main(z.view(-1, self.z_dim, 1, 1))
+        x = self.linear(z)
+        x = x.view(x.size(0), -1, self.M, self.M)
+        x = self.main(x)
+        return x
 
 
 class Discriminator(nn.Module):
-    def __init__(self, M):
-        super(Discriminator, self).__init__()
+    def __init__(self, M=32):
+        super().__init__()
+        self.M = M
 
         self.main = nn.Sequential(
-            # 64
-            nn.Conv2d(3, 64, 5, 2, 2, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            # 32
-            nn.Conv2d(64, 128, 5, 2, 2, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm2d(128),
-            # 16
-            nn.Conv2d(128, 256, 5, 2, 2, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm2d(256),
-            # 8
-            nn.Conv2d(256, 512, 5, 2, 2, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm2d(512)
-            # 4
-        )
-        self.linear = nn.Linear(M // 16 * M // 16 * 512, 1)
-        weights_init(self)
+            # M
+            nn.Conv2d(
+                3, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(
+                64, 128, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            # M / 2
+            nn.Conv2d(
+                128, 128, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(
+                128, 256, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            # M / 4
+            nn.Conv2d(
+                256, 256, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv2d(
+                256, 512, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True),
+            # M / 8
+            nn.Conv2d(
+                512, 512, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.LeakyReLU(0.1, inplace=True))
+
+        self.linear = nn.Linear(M // 8 * M // 8 * 512, 1, bias=False)
 
     def forward(self, x):
         x = self.main(x)

@@ -48,6 +48,7 @@ flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
 flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'hinge', loss_fns.keys(), "loss function")
+flags.DEFINE_bool('scheduler', True, 'apply linearly LR decay')
 flags.DEFINE_integer('seed', 0, "random seed")
 flags.DEFINE_float('alpha', 10, "Consistency penalty")
 # logging
@@ -133,10 +134,12 @@ def train():
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
     optim_D = optim.Adam(net_D.parameters(), lr=FLAGS.lr_D, betas=FLAGS.betas)
-    sched_G = optim.lr_scheduler.LambdaLR(
-        optim_G, lambda step: 1 - step / FLAGS.total_steps)
-    sched_D = optim.lr_scheduler.LambdaLR(
-        optim_D, lambda step: 1 - step / FLAGS.total_steps)
+
+    if FLAGS.scheduler:
+        sched_G = optim.lr_scheduler.LambdaLR(
+            optim_G, lambda step: 1 - step / FLAGS.total_steps)
+        sched_D = optim.lr_scheduler.LambdaLR(
+            optim_D, lambda step: 1 - step / FLAGS.total_steps)
 
     os.makedirs(os.path.join(FLAGS.logdir, 'sample'))
     writer = SummaryWriter(os.path.join(FLAGS.logdir))
@@ -208,8 +211,10 @@ def train():
                 (x.grad * x.shape[0]), start_dim=1), p=2, dim=1).mean()
             writer.add_scalar('avg_grad_norm', avg_grad_norm, step)
 
-            sched_G.step()
-            sched_D.step()
+            if FLAGS.scheduler:
+                sched_G.step()
+                sched_D.step()
+
             pbar.update(1)
 
             if step == 1 or step % FLAGS.sample_step == 0:
@@ -221,14 +226,18 @@ def train():
                     FLAGS.logdir, 'sample', '%d.png' % step))
 
             if step == 1 or step % FLAGS.eval_step == 0:
-                torch.save({
+                ckpt = {
                     'net_G': net_G.state_dict(),
                     'net_D': net_D.state_dict(),
                     'optim_G': optim_G.state_dict(),
                     'optim_D': optim_D.state_dict(),
-                    'sched_G': sched_G.state_dict(),
-                    'sched_D': sched_D.state_dict(),
-                }, os.path.join(FLAGS.logdir, 'model.pt'))
+                }
+                if FLAGS.scheduler:
+                    ckpt.update({
+                        'sched_G': sched_G.state_dict(),
+                        'sched_D': sched_D.state_dict(),
+                    })
+                torch.save(ckpt, os.path.join(FLAGS.logdir, 'model.pt'))
                 if FLAGS.record:
                     imgs = generate_imgs(
                         net_G, device, FLAGS.z_dim, 50000, FLAGS.batch_size)
