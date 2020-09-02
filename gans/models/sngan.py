@@ -13,21 +13,23 @@ class Generator(nn.Module):
         self.M = M
         self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
             nn.ConvTranspose2d(
-                512, 256, kernel_size=4, stride=2, padding=1, bias=False),
+                512, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
             nn.ConvTranspose2d(
-                256, 128, kernel_size=4, stride=2, padding=1, bias=False),
+                256, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
             nn.ConvTranspose2d(
-                128, 64, kernel_size=4, stride=2, padding=1, bias=False),
+                128, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
-            nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh())
-        weights_init(self)
+        dcgan_weights_init(self)
 
     def forward(self, z):
         x = self.linear(z)
@@ -43,34 +45,34 @@ class Discriminator(nn.Module):
 
         self.main = nn.Sequential(
             # M
-            spectral_norm(nn.Conv2d(
-                3, 64, kernel_size=3, stride=1, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
-            spectral_norm(nn.Conv2d(
-                64, 64, kernel_size=4, stride=2, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
             # M / 2
-            spectral_norm(nn.Conv2d(
-                64, 128, kernel_size=3, stride=1, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
-            spectral_norm(nn.Conv2d(
-                128, 128, kernel_size=4, stride=2, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(128, 128, kernel_size=4, stride=2, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
             # M / 4
-            spectral_norm(nn.Conv2d(
-                128, 256, kernel_size=3, stride=1, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
-            spectral_norm(nn.Conv2d(
-                256, 256, kernel_size=4, stride=2, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(256, 256, kernel_size=4, stride=2, padding=1)),
             nn.LeakyReLU(0.1, inplace=True),
             # M / 8
-            spectral_norm(nn.Conv2d(
-                256, 512, kernel_size=3, stride=1, padding=1, bias=False)),
+            spectral_norm(
+                nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)),
             nn.LeakyReLU(0.1, inplace=True))
 
         self.linear = spectral_norm(
             nn.Linear(M // 8 * M // 8 * 512, 1, bias=False))
-        weights_init(self)
+        dcgan_weights_init(self)
 
     def forward(self, x):
         x = self.main(x)
@@ -254,5 +256,13 @@ def weights_init(model):
                 init.zeros_(module.bias)
         if isinstance(module, nn.Linear):
             init.xavier_uniform_(module.weight, gain=1.0)
+            if module.bias is not None:
+                init.zeros_(module.bias)
+
+
+def dcgan_weights_init(model):
+    for name, module in model.named_modules():
+        if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear)):
+            init.normal_(module.weight, std=0.02)
             if module.bias is not None:
                 init.zeros_(module.bias)
