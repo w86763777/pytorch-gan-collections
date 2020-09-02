@@ -1,0 +1,16 @@
+--arch=res48
+--batch_size=128
+--dataset=stl10
+--fid_cache=./stats/stl10_stats.npz
+--logdir=./logs/SNGAN_STL10_CNN
+--loss=hinge
+--lr_D=0.0002
+--lr_G=0.0002
+--n_dis=1
+--num_images=50000
+--record
+--sample_step=500
+--sample_size=64
+--seed=0
+--total_steps=100000
+--z_dim=128

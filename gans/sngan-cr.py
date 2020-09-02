@@ -133,10 +133,12 @@ def train():
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)
     optim_D = optim.Adam(net_D.parameters(), lr=FLAGS.lr_D, betas=FLAGS.betas)
-    sched_G = optim.lr_scheduler.LambdaLR(
-        optim_G, lambda step: 1 - step / FLAGS.total_steps)
-    sched_D = optim.lr_scheduler.LambdaLR(
-        optim_D, lambda step: 1 - step / FLAGS.total_steps)
+    
+    # No lr_scheduler in CR-SNGAN
+    # sched_G = optim.lr_scheduler.LambdaLR(
+    #     optim_G, lambda step: 1 - step / FLAGS.total_steps)
+    # sched_D = optim.lr_scheduler.LambdaLR(
+    #     optim_D, lambda step: 1 - step / FLAGS.total_steps)
 
     os.makedirs(os.path.join(FLAGS.logdir, 'sample'))
     writer = SummaryWriter(os.path.join(FLAGS.logdir))
@@ -208,8 +210,8 @@ def train():
                 (x.grad * x.shape[0]), start_dim=1), p=2, dim=1).mean()
             writer.add_scalar('avg_grad_norm', avg_grad_norm, step)
 
-            sched_G.step()
-            sched_D.step()
+            # sched_G.step()
+            # sched_D.step()
             pbar.update(1)
 
             if step == 1 or step % FLAGS.sample_step == 0:
@@ -226,8 +228,8 @@ def train():
                     'net_D': net_D.state_dict(),
                     'optim_G': optim_G.state_dict(),
                     'optim_D': optim_D.state_dict(),
-                    'sched_G': sched_G.state_dict(),
-                    'sched_D': sched_D.state_dict(),
+                    # 'sched_G': sched_G.state_dict(),
+                    # 'sched_D': sched_D.state_dict(),
                 }, os.path.join(FLAGS.logdir, 'model.pt'))
                 if FLAGS.record:
                     imgs = generate_imgs(
