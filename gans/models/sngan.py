@@ -72,8 +72,7 @@ class Discriminator(nn.Module):
                 nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)),
             nn.LeakyReLU(0.1, inplace=True))
 
-        self.linear = spectral_norm(
-            nn.Linear(M // 8 * M // 8 * 512, 1, bias=False))
+        self.linear = spectral_norm(nn.Linear(M // 8 * M // 8 * 512, 1))
         dcgan_weights_init(self)
 
     def forward(self, x):
