@@ -7,30 +7,51 @@ import torch.nn as nn
 from torch.nn.utils.spectral_norm import spectral_norm
 
 
-Activation = partial(nn.SELU)
+class LeakySoftplus(nn.Softplus):
+    def __init__(self, alpha=0.1):
+        super().__init__()
+        self.alpha = alpha
+
+    def forward(self, x):
+        return self.alpha * x + (1 - self.alpha) * super().forward(x)
+
+
+G_activation_maps = {
+    'rely': nn.ReLU,
+    'selu': nn.SELU,
+    'elu': nn.ELU,
+    'softplus': nn.Softplus,
+}
+
+D_activation_maps = {
+    'rely': nn.ReLU,
+    'selu': nn.SELU,
+    'elu': nn.ELU,
+    'softplus': LeakySoftplus,
+}
 
 
 class Generator(nn.Module):
-    def __init__(self, z_dim, M=4):
+    def __init__(self, z_dim, activation='relu', M=4):
         super().__init__()
         self.z_dim = z_dim
         self.M = M
         self.linear = nn.Linear(self.z_dim, M * M * 512)
         self.main = nn.Sequential(
             nn.BatchNorm2d(512),
-            Activation(),
+            G_activation_maps[activation](),
             nn.ConvTranspose2d(
                 512, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
-            Activation(),
+            G_activation_maps[activation](),
             nn.ConvTranspose2d(
                 256, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            Activation(),
+            G_activation_maps[activation](),
             nn.ConvTranspose2d(
                 128, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            Activation(),
+            G_activation_maps[activation](),
             nn.Conv2d(64, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh())
         dcgan_weights_init(self)
@@ -45,7 +66,7 @@ class Generator(nn.Module):
 # In CR-SNGAN, the channel sizes are    [64, 128, 128, 256, 256, 512, 512]
 # In SNGAN, the channel sizes are       [64, 64, 128, 128, 256, 256, 512]
 class Discriminator(nn.Module):
-    def __init__(self, M=32):
+    def __init__(self, activation, M=32):
         super().__init__()
         self.M = M
 
@@ -53,28 +74,29 @@ class Discriminator(nn.Module):
             # M
             spectral_norm(
                 nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             spectral_norm(
                 nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             # M / 2
             spectral_norm(
                 nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             spectral_norm(
                 nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             # M / 4
             spectral_norm(
                 nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             spectral_norm(
                 nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1)),
-            Activation(),
+            D_activation_maps[activation](),
             # M / 8
             spectral_norm(
                 nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)),
-            Activation())
+            D_activation_maps[activation]()
+        )
 
         self.linear = spectral_norm(nn.Linear(M // 8 * M // 8 * 512, 1))
         dcgan_weights_init(self)
@@ -107,15 +129,15 @@ class Discriminator48(Discriminator):
 
 
 class ResGenBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, activation='relu'):
         super().__init__()
         self.residual = nn.Sequential(
             nn.BatchNorm2d(in_channels),
-            Activation(),
+            G_activation_maps[activation](),
             nn.Upsample(scale_factor=2),
             nn.Conv2d(in_channels, out_channels, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_channels),
-            Activation(),
+            G_activation_maps[activation](),
             nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1),
         )
         self.shortcut = nn.Sequential(
@@ -128,17 +150,17 @@ class ResGenBlock(nn.Module):
 
 
 class ResGenerator32(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, activation='relu'):
         super().__init__()
         self.z_dim = z_dim
         self.linear = nn.Linear(z_dim, 4 * 4 * 256)
 
         self.blocks = nn.Sequential(
-            ResGenBlock(256, 256),
-            ResGenBlock(256, 256),
-            ResGenBlock(256, 256),
+            ResGenBlock(256, 256, activation),
+            ResGenBlock(256, 256, activation),
+            ResGenBlock(256, 256, activation),
             nn.BatchNorm2d(256),
-            Activation(),
+            G_activation_maps[activation](),
             nn.Conv2d(256, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -151,17 +173,17 @@ class ResGenerator32(nn.Module):
 
 
 class ResGenerator48(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, activation='relu'):
         super().__init__()
         self.z_dim = z_dim
         self.linear = nn.Linear(z_dim, 6 * 6 * 512)
 
         self.blocks = nn.Sequential(
-            ResGenBlock(512, 256),
-            ResGenBlock(256, 128),
-            ResGenBlock(128, 64),
+            ResGenBlock(512, 256, activation),
+            ResGenBlock(256, 128, activation),
+            ResGenBlock(128, 64, activation),
             nn.BatchNorm2d(64),
-            Activation(),
+            G_activation_maps[activation](),
             nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.Tanh(),
         )
@@ -174,14 +196,14 @@ class ResGenerator48(nn.Module):
 
 
 class OptimizedResDisblock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, activation='relu'):
         super().__init__()
         self.shortcut = nn.Sequential(
             nn.AvgPool2d(2),
             spectral_norm(nn.Conv2d(in_channels, out_channels, 1, 1, 0)))
         self.residual = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            Activation(),
+            G_activation_maps[activation](),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
             nn.AvgPool2d(2))
 
@@ -190,7 +212,8 @@ class OptimizedResDisblock(nn.Module):
 
 
 class ResDisBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, down=False):
+    def __init__(self, in_channels, out_channels, down=False,
+                 activation='relu'):
         super().__init__()
         shortcut = []
         if in_channels != out_channels or down:
@@ -201,9 +224,9 @@ class ResDisBlock(nn.Module):
         self.shortcut = nn.Sequential(*shortcut)
 
         residual = [
-            Activation(),
+            G_activation_maps[activation](),
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            Activation(),
+            G_activation_maps[activation](),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
         ]
         if down:
@@ -215,14 +238,14 @@ class ResDisBlock(nn.Module):
 
 
 class ResDiscriminator32(nn.Module):
-    def __init__(self):
+    def __init__(self, activation='relu'):
         super().__init__()
         self.model = nn.Sequential(
-            OptimizedResDisblock(3, 128),
-            ResDisBlock(128, 128, down=True),
-            ResDisBlock(128, 128),
-            ResDisBlock(128, 128),
-            Activation())
+            OptimizedResDisblock(3, 128, activation),
+            ResDisBlock(128, 128, down=True, activation=activation),
+            ResDisBlock(128, 128, activation),
+            ResDisBlock(128, 128, activation),
+            G_activation_maps[activation]())
         self.linear = spectral_norm(nn.Linear(128, 1, bias=False))
         weights_init(self)
 
@@ -233,14 +256,14 @@ class ResDiscriminator32(nn.Module):
 
 
 class ResDiscriminator48(nn.Module):
-    def __init__(self):
+    def __init__(self, activation='relu'):
         super().__init__()
         self.model = nn.Sequential(
-            OptimizedResDisblock(3, 64),
-            ResDisBlock(64, 128, down=True),
-            ResDisBlock(128, 256, down=True),
-            ResDisBlock(256, 512, down=True),
-            Activation())
+            OptimizedResDisblock(3, 64, activation),
+            ResDisBlock(64, 128, down=True, activation=activation),
+            ResDisBlock(128, 256, down=True, activation=activation),
+            ResDisBlock(256, 512, down=True, activation=activation),
+            G_activation_maps[activation]())
         self.linear = spectral_norm(nn.Linear(512, 1, bias=False))
         weights_init(self)
 

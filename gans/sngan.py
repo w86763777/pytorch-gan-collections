@@ -49,6 +49,8 @@ flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_enum('loss', 'hinge', loss_fns.keys(), "loss function")
 flags.DEFINE_bool('scheduler', True, 'apply linearly LR decay')
+flags.DEFINE_enum('G_activation', models.G_activation_maps.keys(), 'G act.')
+flags.DEFINE_enum('D_activation', models.D_activation_maps.keys(), 'D act.')
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
@@ -111,8 +113,10 @@ def train():
         dataset, batch_size=FLAGS.batch_size, shuffle=True, num_workers=4,
         drop_last=True)
 
-    net_G = net_G_models[FLAGS.arch](FLAGS.z_dim).to(device)
-    net_D = net_D_models[FLAGS.arch]().to(device)
+    net_G = net_G_models[FLAGS.arch](
+        FLAGS.z_dim, activation=FLAGS.G_activation).to(device)
+    net_D = net_D_models[FLAGS.arch](
+        activation=FLAGS.D_activation).to(device)
     loss_fn = loss_fns[FLAGS.loss]()
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)

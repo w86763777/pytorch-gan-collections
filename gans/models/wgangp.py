@@ -231,7 +231,7 @@ class ResDiscriminator48(nn.Module):
         weights_init(self)
 
     def forward(self, x):
-        x = self.model(x).sum(dim=[2, 3])
+        x = self.model(x)
         x = torch.flatten(x, start_dim=1)
         x = self.linear(x)
         return x
