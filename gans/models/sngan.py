@@ -17,17 +17,19 @@ class LeakySoftplus(nn.Softplus):
 
 
 G_activation_maps = {
-    'rely': nn.ReLU,
+    'relu': nn.ReLU,
     'selu': nn.SELU,
     'elu': nn.ELU,
     'softplus': nn.Softplus,
 }
 
 D_activation_maps = {
-    'rely': nn.ReLU,
+    'relu': nn.ReLU,
     'selu': nn.SELU,
     'elu': nn.ELU,
-    'softplus': LeakySoftplus,
+    'softplus': nn.Softplus,
+    'leakyrelu': partial(nn.LeakyReLU, 0.1),
+    'leakysoftplus': LeakySoftplus,
 }
 
 
@@ -109,23 +111,23 @@ class Discriminator(nn.Module):
 
 
 class Generator32(Generator):
-    def __init__(self, z_dim):
-        super().__init__(z_dim, M=4)
+    def __init__(self, z_dim, activation='relu'):
+        super().__init__(z_dim, activation, M=4)
 
 
 class Generator48(Generator):
-    def __init__(self, z_dim):
-        super().__init__(z_dim, M=6)
+    def __init__(self, z_dim, activation='relu'):
+        super().__init__(z_dim, activation, M=6)
 
 
 class Discriminator32(Discriminator):
-    def __init__(self):
-        super().__init__(M=32)
+    def __init__(self, activation='leakysoftplus'):
+        super().__init__(activation, M=32)
 
 
 class Discriminator48(Discriminator):
-    def __init__(self):
-        super().__init__(M=48)
+    def __init__(self, activation='leakysoftplus'):
+        super().__init__(activation, M=48)
 
 
 class ResGenBlock(nn.Module):
@@ -203,7 +205,7 @@ class OptimizedResDisblock(nn.Module):
             spectral_norm(nn.Conv2d(in_channels, out_channels, 1, 1, 0)))
         self.residual = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            G_activation_maps[activation](),
+            D_activation_maps[activation](),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
             nn.AvgPool2d(2))
 
@@ -224,9 +226,9 @@ class ResDisBlock(nn.Module):
         self.shortcut = nn.Sequential(*shortcut)
 
         residual = [
-            G_activation_maps[activation](),
+            D_activation_maps[activation](),
             spectral_norm(nn.Conv2d(in_channels, out_channels, 3, 1, 1)),
-            G_activation_maps[activation](),
+            D_activation_maps[activation](),
             spectral_norm(nn.Conv2d(out_channels, out_channels, 3, 1, 1)),
         ]
         if down:
@@ -245,7 +247,7 @@ class ResDiscriminator32(nn.Module):
             ResDisBlock(128, 128, down=True, activation=activation),
             ResDisBlock(128, 128, activation),
             ResDisBlock(128, 128, activation),
-            G_activation_maps[activation]())
+            D_activation_maps[activation]())
         self.linear = spectral_norm(nn.Linear(128, 1, bias=False))
         weights_init(self)
 
@@ -263,7 +265,7 @@ class ResDiscriminator48(nn.Module):
             ResDisBlock(64, 128, down=True, activation=activation),
             ResDisBlock(128, 256, down=True, activation=activation),
             ResDisBlock(256, 512, down=True, activation=activation),
-            G_activation_maps[activation]())
+            D_activation_maps[activation]())
         self.linear = spectral_norm(nn.Linear(512, 1, bias=False))
         weights_init(self)
 

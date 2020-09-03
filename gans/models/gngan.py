@@ -39,10 +39,10 @@ G_activation_maps = {
 
 D_activation_maps = {
     'relu': nn.ReLU,
-    'leakyrelu': partial(nn.LeakyReLU, 0.1),
     'selu': nn.SELU,
     'elu': nn.ELU,
     'softplus': nn.Softplus,
+    'leakyrelu': partial(nn.LeakyReLU, 0.1),
     'leakysoftplus': LeakySoftplus,
 }
 
@@ -82,7 +82,7 @@ class Generator(nn.Module):
 # In CR-SNGAN, the channel sizes are    [64, 128, 128, 256, 256, 512, 512]
 # In SNGAN, the channel sizes are       [64, 64, 128, 128, 256, 256, 512]
 class Discriminator(nn.Module):
-    def __init__(self, activation, M=32):
+    def __init__(self, activation='leakysoftplus', M=32):
         super().__init__()
         self.M = M
 
@@ -118,23 +118,23 @@ class Discriminator(nn.Module):
 
 
 class Generator32(Generator):
-    def __init__(self, z_dim):
-        super().__init__(z_dim, M=4)
+    def __init__(self, z_dim, activation='relu'):
+        super().__init__(z_dim, activation, M=4)
 
 
 class Generator48(Generator):
-    def __init__(self, z_dim):
-        super().__init__(z_dim, M=6)
+    def __init__(self, z_dim, activation='relu'):
+        super().__init__(z_dim, activation, M=6)
 
 
 class Discriminator32(Discriminator):
-    def __init__(self):
-        super().__init__(M=32)
+    def __init__(self, activation='leakysoftplus'):
+        super().__init__(activation, M=32)
 
 
 class Discriminator48(Discriminator):
-    def __init__(self):
-        super().__init__(M=48)
+    def __init__(self, activation='leakysoftplus'):
+        super().__init__(activation, M=48)
 
 
 class ResGenBlock(nn.Module):
