@@ -8,7 +8,7 @@ from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
 
-import models.wgangp as models
+import models.gngan as models
 import common.losses as losses
 from common.utils import generate_imgs, infiniteloop, set_seed
 from common.score.score import get_inception_and_fid_score
@@ -49,6 +49,8 @@ flags.DEFINE_integer('z_dim', 128, "latent space dimension")
 flags.DEFINE_float('alpha', 10, "gradient penalty")
 flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
 flags.DEFINE_bool('scheduler', True, 'apply linearly LR decay')
+flags.DEFINE_enum('G_activation', 'relu', models.G_activation_maps.keys(), 'G')
+flags.DEFINE_enum('D_activation', 'relu', models.D_activation_maps.keys(), 'D')
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
@@ -125,11 +127,13 @@ def train():
             ]))
 
     dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=FLAGS.batch_size, shuffle=True, num_workers=4,
+        dataset, batch_size=FLAGS.batch_size, shuffle=True, num_workers=0,
         drop_last=True)
 
-    net_G = net_G_models[FLAGS.arch](FLAGS.z_dim).to(device)
-    net_D = net_D_models[FLAGS.arch]().to(device)
+    net_G = net_G_models[FLAGS.arch](
+        FLAGS.z_dim, activation=FLAGS.G_activation).to(device)
+    net_D = net_D_models[FLAGS.arch](
+        activation=FLAGS.D_activation).to(device)
     loss_fn = loss_fns[FLAGS.loss]()
 
     optim_G = optim.Adam(net_G.parameters(), lr=FLAGS.lr_G, betas=FLAGS.betas)

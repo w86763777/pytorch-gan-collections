@@ -8,7 +8,7 @@ from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
 
-import models.wgangp as models
+import models.gngan as models
 import common.losses as losses
 from common.utils import generate_imgs, infiniteloop, set_seed
 from common.score.score import get_inception_and_fid_score
