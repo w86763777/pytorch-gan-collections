@@ -35,6 +35,7 @@ G_activation_maps = {
     'selu': nn.SELU,
     'elu': nn.ELU,
     'softplus': nn.Softplus,
+    'softplus20': partial(nn.Softplus, beta=20),
 }
 
 D_activation_maps = {
@@ -42,6 +43,7 @@ D_activation_maps = {
     'selu': nn.SELU,
     'elu': nn.ELU,
     'softplus': nn.Softplus,
+    'softplus20': partial(nn.Softplus, beta=20),
     'leakyrelu': partial(nn.LeakyReLU, 0.1),
     'leakysoftplus': LeakySoftplus,
 }
