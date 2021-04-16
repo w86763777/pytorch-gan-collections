@@ -8,10 +8,10 @@ from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
 
-import models.wgangp as models
-import common.losses as losses
-from common.utils import generate_imgs, infiniteloop, set_seed
-from common.score.score import get_inception_and_fid_score
+import source.models.wgangp as models
+import source.losses as losses
+from source.utils import generate_imgs, infiniteloop, set_seed
+from metrics.score.both import get_inception_score_and_fid
 
 
 net_G_models = {
@@ -134,7 +134,7 @@ def train():
     writer.add_image('real_sample', grid)
 
     looper = infiniteloop(dataloader)
-    with trange(1, FLAGS.total_steps + 1, dynamic_ncols=True) as pbar:
+    with trange(1, FLAGS.total_steps + 1, desc='Training', ncols=0) as pbar:
         for step in pbar:
             # Discriminator
             for _ in range(FLAGS.n_dis):
@@ -189,16 +189,16 @@ def train():
                 if FLAGS.record:
                     imgs = generate_imgs(
                         net_G, device, FLAGS.z_dim, 50000, FLAGS.batch_size)
-                    is_score, fid_score = get_inception_and_fid_score(
-                        imgs, device, FLAGS.fid_cache, verbose=True)
+                    IS, FID = get_inception_score_and_fid(
+                        imgs, FLAGS.fid_cache, verbose=True)
                     pbar.write(
                         "%s/%s Inception Score: %.3f(%.5f), "
                         "FID Score: %6.3f" % (
-                            step, FLAGS.total_steps, is_score[0], is_score[1],
-                            fid_score))
-                    writer.add_scalar('inception_score', is_score[0], step)
-                    writer.add_scalar('inception_score_std', is_score[1], step)
-                    writer.add_scalar('fid_score', fid_score, step)
+                            step, FLAGS.total_steps, IS[0], IS[1],
+                            FID))
+                    writer.add_scalar('Inception_Score', IS[0], step)
+                    writer.add_scalar('Inception_Score_std', IS[1], step)
+                    writer.add_scalar('FID', FID, step)
     writer.close()
 
 

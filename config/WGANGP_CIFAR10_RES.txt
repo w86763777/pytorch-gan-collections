@@ -2,7 +2,7 @@
 --arch=res32
 --batch_size=64
 --dataset=cifar10
---fid_cache=./stats/cifar10_stats.npz
+--fid_cache=./stats/cifar10.test.npz
 --logdir=./logs/WGANGP_CIFAR10_RES
 --loss=was
 --lr_D=0.0002

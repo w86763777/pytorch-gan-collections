@@ -1,29 +1,32 @@
 import os
+import glob
 
 import imageio
+import numpy as np
 from absl import app, flags
-from tqdm import tqdm
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('logdir', None, 'path to logdir')
+flags.DEFINE_string('sample_dir', None, 'path to logdir')
+flags.DEFINE_string('output', None, 'path to logdir')
 flags.DEFINE_integer('frame_num', 50, 'number of frames')
-flags.mark_flag_as_required('logdir')
+flags.mark_flag_as_required('sample_dir')
+flags.mark_flag_as_required('output')
 
 
 def main(argv):
-    sample_dir = os.path.join(FLAGS.logdir, 'sample')
-    file_names = [f for f in os.listdir(sample_dir) if f.endswith('.png')]
-    file_names = sorted(file_names, key=lambda f: int(f.split('.')[0]))
+    file_names = glob.glob(os.path.join(FLAGS.sample_dir, '*.png'))
+    file_names = sorted(
+        file_names,
+        key=lambda p: int(os.path.splitext(os.path.basename(p))[0]))
     file_names = file_names[::len(file_names) // FLAGS.frame_num]
 
     frames = []
-    for file_name in tqdm(file_names, desc='Load image'):
-        frames.append(imageio.imread(os.path.join(sample_dir, file_name)))
+    for file_name in file_names:
+        frames.append(imageio.imread(file_name))
+    druation = list(np.linspace(0.05, 0.2, len(file_names)))
     print('Save gif...')
-    imageio.mimsave(
-        os.path.join(FLAGS.logdir, 'progress.gif'), frames, 'GIF',
-        duration=0.01)
+    imageio.mimsave(FLAGS.output, frames, 'GIF', duration=druation)
 
 
 if __name__ == '__main__':

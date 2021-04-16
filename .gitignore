@@ -2,12 +2,12 @@
 .vscode
 
 # python
-*venv*
+venv
+.python-version
 __pycache__
 
 # log
 logs
-logs_backup
 *.zip
 
 # data

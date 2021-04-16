@@ -8,22 +8,18 @@ from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
 
-import models.wgangp as models
-import common.losses as losses
-from common.utils import generate_imgs, infiniteloop, set_seed
-from common.score.score import get_inception_and_fid_score
+import source.models.dcgan as models
+import source.losses as losses
+from source.utils import generate_imgs, infiniteloop, set_seed
+from metrics.score.both import get_inception_score_and_fid
 
 
 net_G_models = {
-    'res32': models.ResGenerator32,
-    'res48': models.ResGenerator48,
     'cnn32': models.Generator32,
     'cnn48': models.Generator48,
 }
 
 net_D_models = {
-    'res32': models.ResDiscriminator32,
-    'res48': models.ResDiscriminator48,
     'cnn32': models.Discriminator32,
     'cnn48': models.Discriminator48,
 }
@@ -38,22 +34,21 @@ loss_fns = {
 FLAGS = flags.FLAGS
 # model and training
 flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
-flags.DEFINE_enum('arch', 'res32', net_G_models.keys(), "architecture")
-flags.DEFINE_integer('total_steps', 100000, "total number of training steps")
-flags.DEFINE_integer('batch_size', 64, "batch size")
+flags.DEFINE_enum('arch', 'cnn32', net_G_models.keys(), "architecture")
+flags.DEFINE_integer('total_steps', 50000, "total number of training steps")
+flags.DEFINE_integer('batch_size', 128, "batch size")
 flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
 flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
-flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
-flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
-flags.DEFINE_integer('z_dim', 128, "latent space dimension")
-flags.DEFINE_float('alpha', 10, "gradient penalty")
-flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
+flags.DEFINE_multi_float('betas', [0.5, 0.9], "for Adam")
+flags.DEFINE_integer('n_dis', 1, "update Generator every this steps")
+flags.DEFINE_integer('z_dim', 100, "latent space dimension")
+flags.DEFINE_enum('loss', 'bce', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
-flags.DEFINE_string('logdir', './logs/WGANGP_CIFAR10_RES', 'logging folder')
+flags.DEFINE_string('logdir', './logs/DCGAN_CIFAR10', 'logging folder')
 flags.DEFINE_bool('record', True, "record inception score and FID score")
 flags.DEFINE_string('fid_cache', './stats/cifar10_stats.npz', 'FID cache')
 # generate
@@ -85,23 +80,6 @@ def generate():
                 save_image(
                     image, os.path.join(FLAGS.output, '%d.png' % counter))
                 counter += 1
-
-
-def cacl_gradient_penalty(net_D, real, fake):
-    t = torch.rand(real.size(0), 1, 1, 1).to(real.device)
-    t = t.expand(real.size())
-
-    interpolates = t * real + (1 - t) * fake
-    interpolates.requires_grad_(True)
-    disc_interpolates = net_D(interpolates)
-    grad = torch.autograd.grad(
-        outputs=disc_interpolates, inputs=interpolates,
-        grad_outputs=torch.ones_like(disc_interpolates),
-        create_graph=True, retain_graph=True)[0]
-
-    grad_norm = torch.norm(torch.flatten(grad, start_dim=1), dim=1)
-    loss_gp = torch.mean((grad_norm - 1) ** 2)
-    return loss_gp
 
 
 def train():
@@ -151,7 +129,7 @@ def train():
     writer.add_image('real_sample', grid)
 
     looper = infiniteloop(dataloader)
-    with trange(1, FLAGS.total_steps + 1, dynamic_ncols=True) as pbar:
+    with trange(1, FLAGS.total_steps + 1, desc='Training', ncols=0) as pbar:
         for step in pbar:
             # Discriminator
             for _ in range(FLAGS.n_dis):
@@ -162,18 +140,15 @@ def train():
                 net_D_real = net_D(real)
                 net_D_fake = net_D(fake)
                 loss = loss_fn(net_D_real, net_D_fake)
-                loss_gp = cacl_gradient_penalty(net_D, real, fake)
-                loss_all = loss + FLAGS.alpha * loss_gp
 
                 optim_D.zero_grad()
-                loss_all.backward()
+                loss.backward()
                 optim_D.step()
 
                 if FLAGS.loss == 'was':
                     loss = -loss
                 pbar.set_postfix(loss='%.4f' % loss)
             writer.add_scalar('loss', loss, step)
-            writer.add_scalar('loss_gp', loss_gp, step)
 
             # Generator
             z = torch.randn(FLAGS.batch_size * 2, FLAGS.z_dim).to(device)
@@ -206,16 +181,16 @@ def train():
                 if FLAGS.record:
                     imgs = generate_imgs(
                         net_G, device, FLAGS.z_dim, 50000, FLAGS.batch_size)
-                    is_score, fid_score = get_inception_and_fid_score(
-                        imgs, device, FLAGS.fid_cache, verbose=True)
+                    IS, FID = get_inception_score_and_fid(
+                        imgs, FLAGS.fid_cache, verbose=True)
                     pbar.write(
                         "%s/%s Inception Score: %.3f(%.5f), "
                         "FID Score: %6.3f" % (
-                            step, FLAGS.total_steps, is_score[0], is_score[1],
-                            fid_score))
-                    writer.add_scalar('inception_score', is_score[0], step)
-                    writer.add_scalar('inception_score_std', is_score[1], step)
-                    writer.add_scalar('fid_score', fid_score, step)
+                            step, FLAGS.total_steps, IS[0], IS[1],
+                            FID))
+                    writer.add_scalar('Inception_Score', IS[0], step)
+                    writer.add_scalar('Inception_Score_std', IS[1], step)
+                    writer.add_scalar('FID', FID, step)
     writer.close()
 
 

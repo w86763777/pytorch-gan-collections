@@ -2,7 +2,7 @@
 
 Pytorch implementation of unsupervised GANs.
 
-For more defails about calculating Inception Score and FID Score using pytorch can be found in [Pytorch-Unified-Inception-FID-Score](https://github.com/w86763777/Pytorch-Unified-Inception-FID-Score) 
+For more defails about calculating Inception Score and FID using pytorch can be found in [pytorch-inception-score-fid](https://github.com/w86763777/pytorch-inception-score-fid) 
 
 ## Models
 - [x] DCGAN
@@ -11,7 +11,10 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 - [x] SN-GAN 
 
 ## Requirements
-- python 3.6
+- Initiate `metric` submoudle
+    ```
+    git submodule update --init
+    ```
 - Install python packages
     ```bash
     pip install -U pip setuptools
@@ -20,76 +23,69 @@ For more defails about calculating Inception Score and FID Score using pytorch c
 
 ## Results
 
-|Model          |Dataset|Inception Score|FID Score|
-|---------------|-------|---------------|---------|
-|DCGAN          |CIFAR10|6.111(0.088)   |41.75    |
-|WGAN(CNN)      |CIFAR10|6.605(0.071)   |30.73    |
-|WGAN-GP(CNN)   |CIFAR10|7.415(0.065)   |21.89    |
-|WGAN-GP(ResNet)|CIFAR10|7.829(0.076)   |15.57    |
-|SNGAN(CNN)     |CIFAR10|7.521(0.111)   |20.41    |
-|SNGAN(ResNet)  |CIFAR10|8.214(0.094)   |14.41    |
+|Model          |Dataset|Inception Score|FID  |
+|--------------|:-----:|:--------------:|:---:|
+|DCGAN          |CIFAR10|6.04(0.05)     |47.90|
+|WGAN(CNN)      |CIFAR10|6.64(0.6)      |33.27|
+|WGAN-GP(CNN)   |CIFAR10|7.47(0.06)     |24.00|
+|WGAN-GP(ResNet)|CIFAR10|7.74(0.10)     |21.89|
+|SNGAN(CNN)     |CIFAR10|7.44(0.11)     |24.94|
+|SNGAN(ResNet)  |CIFAR10|8.22(0.13)     |16.24|
 
 ## Examples
 - DCGAN
 
-    ![image](https://drive.google.com/uc?export=view&id=14vz9JTxi4A8p5x2kiS7STnAMMGJb8_U0) ![image](./images/dcgan_cifar10.png)
+    ![dcgan_gif](https://drive.google.com/uc?export=view&id=1KSBk0Va_4bJXgM7TruZgfHly9If_74-n) ![dcgan_png](https://drive.google.com/uc?export=view&id=1GGa6xd28dHds5lJTRCqnJks-ie_3luH8)
 
 - WGAN(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=12Y5E-Vf-U-fzPLO_bmhhLNK1-q0Lo_OS) ![image](./images/wgan_cifar10_cnn.png)
+    ![wgan_gif](https://drive.google.com/uc?export=view&id=1Yrq-peVwSTUQmK_CF0dcf86mXYp2Qd4D) ![wgan_png](https://drive.google.com/uc?export=view&id=1vER25JI0U9awv25x1Muz5-b7sY-Wyi7d)
 
 - WGAN-GP(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=1i7B2i_nDZrTyvhOefmEHRs_mGXU7mv4Q) ![image](./images/wgangp_cifar10_cnn.png)
+    ![wgangp_cnn_gif](https://drive.google.com/uc?export=view&id=1wUqaKPo4BhCcByHyTEuNhDeb2CfUJB6f) ![wgangp_cnn_png](https://drive.google.com/uc?export=view&id=1w-9N5c7s-f7Ocb6DGVtLloOe5Xkl4CRd)
 
 - WGAN-GP(ResNet)
 
-    ![image](https://drive.google.com/uc?export=view&id=1WbMPMUwd2ltDkqowBMcIwUWP7dF87LH0) ![image](./images/wgangp_cifar10_res.png)
+    ![wgangp_res_gif](https://drive.google.com/uc?export=view&id=16gadJh0K4ZWelmTqIjkPLlk2P423EpCR) ![wgangp_res_png](https://drive.google.com/uc?export=view&id=1ZRYJo7rtbN99hK71OT2dvj94uxzGG063)
 
 - SNGAN(CNN)
 
-    ![image](https://drive.google.com/uc?export=view&id=1tQyWeyjNNOlWWBPo2XwhwZQ9t1q5a1v5) ![image](./images/sngan_cifar10_cnn.png)
+    ![sngan_cnn_gif](https://drive.google.com/uc?export=view&id=1zWtmiwsYJqSqxY7LISBzaBfZHrzbbhXi) ![sngan_cnn_png](https://drive.google.com/uc?export=view&id=1Uq387vzBWptqDWk1c5s1jRYxcuN-IzGZ)
 
 - SNGAN(ResNet)
 
-    ![image](https://drive.google.com/uc?export=view&id=1CN6vgPqodAQBtp9OElPvCaNakomKKP4E) ![image](./images/sngan_cifar10_res.png)
+    ![sngan_res_gif](https://drive.google.com/uc?export=view&id=1et3V7NbLEqH6aOWzkOQceNcnfY3WBOGz) ![sngan_res_png](https://drive.google.com/uc?export=view&id=1neYWCexP8kY2eixMpztNL50TKFLXZcBL)
 
 ## Reproduce
-Download [cifar10_stats.npz](https://drive.google.com/file/d/1nJJ-v7zpkS2EQt9yhc7NXphhCphMK9Z2/view?usp=sharing) for calculating FID score
-and put it to `./stats/cifar10_stats.npz` which is the default path
-
-### Training
-- DCGAN
-	```
-    python gans/dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt
+- Download [cifar10.test.npz](https://drive.google.com/drive/folders/1UBdzl6GtNMwNQ5U-4ESlIer43tNjiGJC?usp=sharing) for calculating FID score. Then, create folder `stats` for the npz files
     ```
-- WGAN(CNN)
-	```
-    python gans/wgan.py --flagfile ./config/WGAN_CIFAR10_CNN.txt
-    ```
-- WGAN-GP(CNN)
-	```
-    python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt
-    ```
-- WGAN-GP(ResNet)
-	```
-    python gans/wgangp.py --flagfile ./config/WGANGP_CIFAR10_RES.txt
-    ```
-- SNGAN(CNN)
-	```
-    python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_CNN.txt
-    ```
-- SNGAN(ResNet)
-	```
-    python gans/sngan.py --flagfile ./config/SNGAN_CIFAR10_RES.txt
+    stats
+    ├── cifar10.test.npz
+    ├── cifar10.train.npz
+    └── stl10.unlabeled.48.npz
     ```
 
-### Generate GIF
-```bash
-python tools/sample2gif.py --logdir path/to/logdir
-```
-e.g.
-```bash
-python tools/sample2gif.py --logdir ./logs/DCGAN_CIFAR10
-```
-output GIF is `./logs/DCGAN_CIFAR10/progress.gif`
+- Train from scratch
+    ```bash
+    # DCGAN
+    python dcgan.py --flagfile ./config/DCGAN_CIFAR10.txt
+    # WGAN(CNN)
+    python wgan.py --flagfile ./config/WGAN_CIFAR10_CNN.txt
+    # WGAN-GP(CNN)
+    python wgangp.py --flagfile ./config/WGANGP_CIFAR10_CNN.txt
+    # WGAN-GP(ResNet)
+    python wgangp.py --flagfile ./config/WGANGP_CIFAR10_RES.txt
+    # SNGAN(CNN)
+    python sngan.py --flagfile ./config/SNGAN_CIFAR10_CNN.txt
+    # SNGAN(ResNet)
+    python sngan.py --flagfile ./config/SNGAN_CIFAR10_RES.txt
+    ```
+    Though the training procedures of different GANs are almost identical, I still separate different methods into different files for clear reading.
+
+## Change Log
+- 2021-04-16
+    - Update pytorch to 1.8.1
+    - Move metrics to submodule.
+    - Evaluate FID on CIFAR10 test set instead of training set.
+    - Fix `cifar10.test.npz` download link and sample images.

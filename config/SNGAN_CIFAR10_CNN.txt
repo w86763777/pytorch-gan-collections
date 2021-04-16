@@ -1,7 +1,7 @@
 --arch=cnn32
 --batch_size=128
 --dataset=cifar10
---fid_cache=./stats/cifar10_stats.npz
+--fid_cache=./stats/cifar10.test.npz
 --logdir=./logs/SNGAN_CIFAR10_CNN
 --loss=hinge
 --lr_D=0.0002
