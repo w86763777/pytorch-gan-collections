@@ -83,6 +83,10 @@ For more defails about calculating Inception Score and FID using pytorch can be 
     ```
     Though the training procedures of different GANs are almost identical, I still separate different methods into different files for clear reading.
 
+## Learning curve
+![inception_score_curve](https://drive.google.com/uc?export=view&id=12JTJS5--2dDjFyVhHJ-b264Qp3S-v8xS)
+![fid_curve](https://drive.google.com/uc?export=view&id=1P4e_DEyW4wvFubPSu5t_i2gVRoecGqs5)
+
 ## Change Log
 - 2021-04-16
     - Update pytorch to 1.8.1
