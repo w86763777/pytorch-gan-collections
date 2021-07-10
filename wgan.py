@@ -7,11 +7,11 @@ from torchvision import datasets, transforms
 from torchvision.utils import make_grid, save_image
 from tensorboardX import SummaryWriter
 from tqdm import trange
+from pytorch_gan_metrics import get_inception_score_and_fid
 
 import source.models.wgangp as models
 import source.losses as losses
 from source.utils import generate_imgs, infiniteloop, set_seed
-from metrics.score.both import get_inception_score_and_fid
 
 
 net_G_models = {
@@ -168,7 +168,6 @@ def train():
 
             sched_G.step()
             sched_D.step()
-            pbar.update(1)
 
             if step == 1 or step % FLAGS.sample_step == 0:
                 fake = net_G(sample_z).cpu()
@@ -188,14 +187,14 @@ def train():
                 }, os.path.join(FLAGS.logdir, 'model.pt'))
                 if FLAGS.record:
                     imgs = generate_imgs(
-                        net_G, device, FLAGS.z_dim, 50000, FLAGS.batch_size)
+                        net_G, device, FLAGS.z_dim,
+                        FLAGS.num_images, FLAGS.batch_size)
                     IS, FID = get_inception_score_and_fid(
                         imgs, FLAGS.fid_cache, verbose=True)
                     pbar.write(
                         "%s/%s Inception Score: %.3f(%.5f), "
                         "FID Score: %6.3f" % (
-                            step, FLAGS.total_steps, IS[0], IS[1],
-                            FID))
+                            step, FLAGS.total_steps, IS[0], IS[1], FID))
                     writer.add_scalar('Inception_Score', IS[0], step)
                     writer.add_scalar('Inception_Score_std', IS[1], step)
                     writer.add_scalar('FID', FID, step)

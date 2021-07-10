@@ -1,4 +1,5 @@
 absl-py
+pytorch_gan_metrics
 scipy
 tensorflow
 tensorboardX
