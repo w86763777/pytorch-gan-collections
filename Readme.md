@@ -11,10 +11,6 @@ For more defails about calculating Inception Score and FID using pytorch can be 
 - [x] SN-GAN 
 
 ## Requirements
-- Initialize `metric` submoudle
-    ```
-    git submodule update --init
-    ```
 - Install python packages
     ```bash
     pip install -U pip setuptools
