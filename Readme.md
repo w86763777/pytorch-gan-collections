@@ -82,13 +82,12 @@ For more defails about calculating Inception Score and FID using pytorch can be 
 ![fid_curve](https://drive.google.com/uc?export=view&id=1P4e_DEyW4wvFubPSu5t_i2gVRoecGqs5)
 
 ## Change Log
-- 2021-01-09
+- 2021-01-10
     - Update pytorch to 1.10.1 and CUDA 11.3
     - Calculate FID and Inception by `pytorch_gan_metrics`
     - Use 50k generated images and CIFAR10 train set to calculate FID
     - Fix default parameters
 
-## Change Log
 - 2021-04-16
     - Update pytorch to 1.8.1
     - Move metrics to submodule.
