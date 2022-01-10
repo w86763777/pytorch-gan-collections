@@ -6,6 +6,9 @@ import pandas as pd
 
 
 if __name__ == '__main__':
+    """
+    Manually download csv file of Inception Score and FID from tensorboard
+    """
     IS = []
     FID = []
     for path in glob.glob('./logs/*.csv'):
@@ -17,9 +20,9 @@ if __name__ == '__main__':
             name = name + ')'
         if name.endswith('_CIFAR10'):
             name = name.replace('_CIFAR10', '')
-        if tag == 'inception_score' or tag == 'Inception_Score':
+        if tag == 'Inception_Score':
             IS.append((name, df.values[:, 1], df.values[:, 2]))
-        elif tag == 'fid_score' or tag == 'FID':
+        elif tag == 'FID':
             FID.append((name, df.values[:, 1], df.values[:, 2]))
         else:
             raise ValueError("???")

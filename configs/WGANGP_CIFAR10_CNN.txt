@@ -1,14 +1,14 @@
---c=0.1
+--alpha=10.0
 --arch=cnn32
 --batch_size=128
 --dataset=cifar10
 --fid_cache=./stats/cifar10.test.npz
---logdir=./logs/WGAN_CIFAR10_CNN
+--logdir=./logs/WGANGP_CIFAR10_CNN
 --loss=was
 --lr_D=0.0002
 --lr_G=0.0002
 --n_dis=1
---num_images=50000
+--num_images=10000
 --record
 --sample_step=500
 --sample_size=64

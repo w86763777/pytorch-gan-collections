@@ -16,16 +16,12 @@ from source.utils import generate_imgs, infiniteloop, set_seed
 
 net_G_models = {
     'res32': models.ResGenerator32,
-    'res48': models.ResGenerator48,
     'cnn32': models.Generator32,
-    'cnn48': models.Generator48,
 }
 
 net_D_models = {
     'res32': models.ResDiscriminator32,
-    'res48': models.ResDiscriminator48,
     'cnn32': models.Discriminator32,
-    'cnn48': models.Discriminator48,
 }
 
 loss_fns = {
@@ -38,29 +34,29 @@ loss_fns = {
 FLAGS = flags.FLAGS
 # model and training
 flags.DEFINE_enum('dataset', 'cifar10', ['cifar10', 'stl10'], "dataset")
-flags.DEFINE_enum('arch', 'res32', net_G_models.keys(), "architecture")
+flags.DEFINE_enum('arch', 'cnn32', net_G_models.keys(), "architecture")
 flags.DEFINE_integer('total_steps', 100000, "total number of training steps")
-flags.DEFINE_integer('batch_size', 64, "batch size")
+flags.DEFINE_integer('batch_size', 128, "batch size")
 flags.DEFINE_float('lr_G', 2e-4, "Generator learning rate")
 flags.DEFINE_float('lr_D', 2e-4, "Discriminator learning rate")
 flags.DEFINE_multi_float('betas', [0.0, 0.9], "for Adam")
 flags.DEFINE_integer('n_dis', 5, "update Generator every this steps")
 flags.DEFINE_integer('z_dim', 128, "latent space dimension")
-flags.DEFINE_float('c', 0.01, "clip value")
+flags.DEFINE_float('c', 0.1, "clip value")
 flags.DEFINE_enum('loss', 'was', loss_fns.keys(), "loss function")
 flags.DEFINE_integer('seed', 0, "random seed")
 # logging
 flags.DEFINE_integer('eval_step', 5000, "evaluate FID and Inception Score")
 flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
-flags.DEFINE_string('logdir', './logs/WGAN_CIFAR10_RES', 'logging folder')
-flags.DEFINE_bool('record', True, "record inception score and FID score")
-flags.DEFINE_string('fid_cache', './stats/cifar10_stats.npz', 'FID cache')
+flags.DEFINE_string('logdir', './logs/WGAN_CIFAR10_CNN', 'logging folder')
+flags.DEFINE_bool('record', True, "record inception score and FID")
+flags.DEFINE_string('fid_cache', './stats/cifar10.test.npz', 'FID cache')
 # generate
 flags.DEFINE_bool('generate', False, 'generate images')
 flags.DEFINE_string('pretrain', None, 'path to test model')
 flags.DEFINE_string('output', './outputs', 'path to output dir')
-flags.DEFINE_integer('num_images', 50000, 'the number of generated images')
+flags.DEFINE_integer('num_images', 10000, 'the number of generated images')
 
 device = torch.device('cuda:0')
 
@@ -193,7 +189,7 @@ def train():
                         imgs, FLAGS.fid_cache, verbose=True)
                     pbar.write(
                         "%s/%s Inception Score: %.3f(%.5f), "
-                        "FID Score: %6.3f" % (
+                        "FID: %6.3f" % (
                             step, FLAGS.total_steps, IS[0], IS[1], FID))
                     writer.add_scalar('Inception_Score', IS[0], step)
                     writer.add_scalar('Inception_Score_std', IS[1], step)
