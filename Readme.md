@@ -1,8 +1,8 @@
 # Collections of GANs
 
-Pytorch implementation of unsupervised GANs.
+Pytorch implementation of basic unsupervised GANs on CIFAR10.
 
-For more defails about calculating Inception Score and FID using pytorch can be found here [pytorch_gan_metrics](https://github.com/w86763777/pytorch-gan-metrics) 
+For more defails about calculating Inception Score and FID using pytorch can be found here [pytorch_gan_metrics](https://github.com/w86763777/pytorch-gan-metrics).
 
 ## Models
 - [x] DCGAN
@@ -18,15 +18,15 @@ For more defails about calculating Inception Score and FID using pytorch can be 
     ```
 
 ## Results
-
+The FID is calculated by 50k generated images and CIFAR10 train set.
 |Model          |Dataset|Inception Score|FID  |
 |--------------|:-----:|:--------------:|:---:|
-|DCGAN          |CIFAR10|5.91(0.15)     |47.46|
-|WGAN(CNN)      |CIFAR10|6.46(0.24)     |38.98|
-|WGAN-GP(CNN)   |CIFAR10|7.69(0.19)     |22.81|
-|WGAN-GP(ResNet)|CIFAR10|7.80(0.20)     |21.48|
-|SNGAN(CNN)     |CIFAR10|7.64(0.21)     |21.86|
-|SNGAN(ResNet)  |CIFAR10|8.21(0.17)     |19.11|
+|DCGAN          |CIFAR10|6.01(0.05)     |42.72|
+|WGAN(CNN)      |CIFAR10|6.62(0.09)     |40.03|
+|WGAN-GP(CNN)   |CIFAR10|7.66(0.10)     |19.83|
+|WGAN-GP(ResNet)|CIFAR10|7.95(0.14)     |16.95|
+|SNGAN(CNN)     |CIFAR10|7.84(0.12)     |17.81|
+|SNGAN(ResNet)  |CIFAR10|8.31(0.10)     |14.32|
 
 ## Examples
 - DCGAN
@@ -54,13 +54,16 @@ For more defails about calculating Inception Score and FID using pytorch can be 
     ![sngan_res_gif](https://drive.google.com/uc?export=view&id=1et3V7NbLEqH6aOWzkOQceNcnfY3WBOGz) ![sngan_res_png](https://drive.google.com/uc?export=view&id=1neYWCexP8kY2eixMpztNL50TKFLXZcBL)
 
 ## Reproduce
-- Download [cifar10.test.npz](https://drive.google.com/drive/folders/1UBdzl6GtNMwNQ5U-4ESlIer43tNjiGJC?usp=sharing) for calculating FID. Then, create folder `stats` for the npz files
+- Download [cifar10.train.npz](https://drive.google.com/drive/folders/1UBdzl6GtNMwNQ5U-4ESlIer43tNjiGJC?usp=sharing) for calculating FID. Then, create folder `stats` for the npz files
     ```
     stats
-    └── cifar10.test.npz
+    └── cifar10.train.npz
     ```
 
 - Train from scratch
+
+    Different methods are separated into different files for clear reading.
+
     ```bash
     # DCGAN
     python dcgan.py --flagfile ./configs/DCGAN_CIFAR10.txt
@@ -75,18 +78,18 @@ For more defails about calculating Inception Score and FID using pytorch can be 
     # SNGAN(ResNet)
     python sngan.py --flagfile ./configs/SNGAN_CIFAR10_RES.txt
     ```
-    Though the training procedures of different GANs are almost identical, I still separate different methods into different files for clear reading.
+    
 
-## Learning curve
+## Learning Curves
 ![inception_score_curve](https://drive.google.com/uc?export=view&id=12JTJS5--2dDjFyVhHJ-b264Qp3S-v8xS)
 ![fid_curve](https://drive.google.com/uc?export=view&id=1P4e_DEyW4wvFubPSu5t_i2gVRoecGqs5)
 
 ## Change Log
 - 2021-01-10
     - Update pytorch to 1.10.1 and CUDA 11.3
-    - Calculate FID and Inception by `pytorch_gan_metrics`
+    - Use `pytorch_gan_metrics` to calculate FID and Inception Score
     - Use 50k generated images and CIFAR10 train set to calculate FID
-    - Fix default parameters
+    - Fix default parameters especially for `wgan.py`
 
 - 2021-04-16
     - Update pytorch to 1.8.1

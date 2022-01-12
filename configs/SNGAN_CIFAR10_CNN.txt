@@ -1,13 +1,13 @@
 --arch=cnn32
 --batch_size=128
 --dataset=cifar10
---fid_cache=./stats/cifar10.test.npz
+--fid_cache=./stats/cifar10.train.npz
 --logdir=./logs/SNGAN_CIFAR10_CNN
 --loss=hinge
 --lr_D=0.0002
 --lr_G=0.0002
 --n_dis=1
---num_images=10000
+--num_images=50000
 --record
 --sample_step=500
 --sample_size=64

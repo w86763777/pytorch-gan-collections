@@ -51,12 +51,12 @@ flags.DEFINE_integer('sample_step', 500, "sample image every this steps")
 flags.DEFINE_integer('sample_size', 64, "sampling size of images")
 flags.DEFINE_string('logdir', './logs/WGANGP_CIFAR10_RES', 'logging folder')
 flags.DEFINE_bool('record', True, "record inception score and FID")
-flags.DEFINE_string('fid_cache', './stats/cifar10.test.npz', 'FID cache')
+flags.DEFINE_string('fid_cache', './stats/cifar10.train.npz', 'FID cache')
 # generate
 flags.DEFINE_bool('generate', False, 'generate images')
 flags.DEFINE_string('pretrain', None, 'path to test model')
 flags.DEFINE_string('output', './outputs', 'path to output dir')
-flags.DEFINE_integer('num_images', 10000, 'the number of generated images')
+flags.DEFINE_integer('num_images', 50000, 'the number of generated images')
 
 device = torch.device('cuda:0')
 
