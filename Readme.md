@@ -85,7 +85,7 @@ The FID is calculated by 50k generated images and CIFAR10 train set.
 ![fid_curve](https://drive.google.com/uc?export=view&id=1P4e_DEyW4wvFubPSu5t_i2gVRoecGqs5)
 
 ## Change Log
-- 2021-01-10
+- 2022-01-10
     - Update pytorch to 1.10.1 and CUDA 11.3
     - Use `pytorch_gan_metrics` to calculate FID and Inception Score
     - Use 50k generated images and CIFAR10 train set to calculate FID
